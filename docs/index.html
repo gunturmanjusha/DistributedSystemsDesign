@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      name="description"
+      content="Architecture studies of scalable distributed systems, focused on reliability, consistency, partitioning, concurrency, fault tolerance, and high availability."
+    >
+    <meta name="theme-color" content="#071126">
+    <title>Distributed Systems Design</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+
+    <header class="hero">
+      <nav class="site-nav container" aria-label="Primary navigation">
+        <a class="brand" href="#top" aria-label="Distributed Systems Design home">
+          <span class="brand-mark" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </span>
+          <span>DS<span class="brand-accent">/</span>Design</span>
+        </a>
+        <div class="nav-links">
+          <a href="#systems">Systems</a>
+          <a href="#framework">Framework</a>
+        </div>
+      </nav>
+
+      <div class="hero-grid container" id="top">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="eyebrow-dot"></span> Architecture portfolio</p>
+          <h1>Distributed<br><span>Systems Design</span></h1>
+          <p class="hero-subtitle">
+            Architecture studies of scalable distributed systems, with emphasis on reliability,
+            consistency, partitioning, concurrency, fault tolerance, and high availability.
+          </p>
+          <p class="hero-intro">
+            This collection examines the architectural decisions behind large-scale backend systems:
+            how they grow, degrade, recover, and evolve. Each study connects scaling strategies and
+            failure modes to the engineering trade-offs that shape production systems.
+          </p>
+          <div class="hero-pillars" aria-label="Core qualities">
+            <span>Scale</span><i aria-hidden="true"></i>
+            <span>Reliability</span><i aria-hidden="true"></i>
+            <span>Consistency</span><i aria-hidden="true"></i>
+            <span>Resilience</span>
+          </div>
+        </div>
+
+        <div class="system-map" aria-hidden="true">
+          <div class="map-glow"></div>
+          <div class="orbit orbit-one"></div>
+          <div class="orbit orbit-two"></div>
+          <div class="map-node node-core">
+            <span class="node-icon"></span>
+            <strong>Control Plane</strong>
+            <small>orchestrate · observe</small>
+          </div>
+          <div class="map-node node-edge"><span></span>Edge</div>
+          <div class="map-node node-stream"><span></span>Stream</div>
+          <div class="map-node node-data"><span></span>Data</div>
+          <div class="map-node node-cache"><span></span>Cache</div>
+          <svg class="map-lines" viewBox="0 0 560 480" preserveAspectRatio="none">
+            <path d="M280 240 C200 200 150 140 90 110"></path>
+            <path d="M280 240 C370 175 430 130 492 105"></path>
+            <path d="M280 240 C195 300 145 350 80 390"></path>
+            <path d="M280 240 C370 285 425 340 485 388"></path>
+            <circle cx="196" cy="199" r="4"></circle>
+            <circle cx="375" cy="171" r="4"></circle>
+            <circle cx="178" cy="316" r="4"></circle>
+            <circle cx="391" cy="301" r="4"></circle>
+          </svg>
+          <div class="map-metric metric-top"><b>99.99%</b><span>availability</span></div>
+          <div class="map-metric metric-bottom"><b>100×</b><span>scale path</span></div>
+        </div>
+      </div>
+    </header>
+
+    <main id="main-content">
+      <section class="principles section" aria-labelledby="principles-title">
+        <div class="container">
+          <div class="section-heading section-heading-inline">
+            <div>
+              <p class="section-kicker">Design vocabulary</p>
+              <h2 id="principles-title">Core design principles</h2>
+            </div>
+            <p>Recurring forces that shape every architecture in the collection.</p>
+          </div>
+
+          <ul class="principle-cloud" role="list">
+            <li class="principle principle-blue"><span aria-hidden="true">↗</span>Scalability</li>
+            <li class="principle principle-violet"><span aria-hidden="true">◇</span>Partitioning</li>
+            <li class="principle principle-cyan"><span aria-hidden="true">≋</span>Consistency</li>
+            <li class="principle principle-green"><span aria-hidden="true">●</span>High Availability</li>
+            <li class="principle principle-orange"><span aria-hidden="true">⌁</span>Fault Tolerance</li>
+            <li class="principle principle-magenta"><span aria-hidden="true">⇄</span>Concurrency</li>
+            <li class="principle principle-indigo"><span aria-hidden="true">⚡</span>Event-Driven Architecture</li>
+            <li class="principle principle-teal"><span aria-hidden="true">▤</span>Caching</li>
+            <li class="principle principle-rose"><span aria-hidden="true">◎</span>Observability</li>
+            <li class="principle principle-sky"><span aria-hidden="true">⌘</span>Multi-Region Design</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="systems section" id="systems" aria-labelledby="systems-title">
+        <div class="container">
+          <div class="section-heading">
+            <p class="section-kicker">Architecture studies · 01–10</p>
+            <h2 id="systems-title">Systems under analysis</h2>
+            <p>
+              Ten production-scale domains, each explored through its defining constraints,
+              operational risks, and paths to horizontal scale.
+            </p>
+          </div>
+
+          <div class="system-grid">
+            <!-- When a study is published, change its article wrapper to an anchor with the future page filename. -->
+            <article class="system-card accent-blue">
+              <div class="card-topline"><span class="card-number">01</span><span class="status status-active">In Progress</span></div>
+              <div class="card-icon" aria-hidden="true"><span class="icon-message"></span></div>
+              <h3>Real-Time Messaging <small>Slack / WhatsApp</small></h3>
+              <p>Low-latency messaging across millions of persistent connections with ordered, durable delivery.</p>
+              <ul class="tag-list" aria-label="Architecture focus">
+                <li>WebSockets</li><li>Message Ordering</li><li>Fan-Out</li><li>Partitioning</li>
+                <li>Presence</li><li>Event Streaming</li><li>Large-Scale Connection Management</li>
+              </ul>
+              <div class="card-footer"><span>Architecture study</span><span aria-hidden="true">↗</span></div>
+            </article>
+
+            <article class="system-card accent-violet">
+              <div class="card-topline"><span class="card-number">02</span><span class="status">Planned</span></div>
+              <div class="card-icon" aria-hidden="true"><span class="icon-cloud"></span></div>
+              <h3>Cloud File Storage <small>Google Drive / Dropbox</small></h3>
+              <p>Durable object storage and metadata coordination for synchronized files at global scale.</p>
+              <ul class="tag-list" aria-label="Architecture focus">
+                <li>Object Storage</li><li>Metadata</li><li>Chunked Uploads</li><li>Synchronization</li>
+                <li>Replication</li><li>Large-File Handling</li><li>Storage Scaling</li>
+              </ul>
+              <div class="card-footer"><span>Architecture study</span><span aria-hidden="true">↗</span></div>
+            </article>
+
+            <article class="system-card accent-orange">
+              <div class="card-topline"><span class="card-number">03</span><span class="status">Planned</span></div>
+              <div class="card-icon" aria-hidden="true"><span class="icon-ticket"></span></div>
+              <h3>Ticket Booking System <small>Ticketmaster</small></h3>
+              <p>Contention-safe inventory allocation for high-demand events and bursty purchase traffic.</p>
+              <ul class="tag-list" aria-label="Architecture focus">
+                <li>Concurrency</li><li>Transactions</li><li>Temporary Reservations</li><li>Locking</li>
+                <li>Idempotency</li><li>Hot Inventory</li><li>Consistency</li>
+              </ul>
+              <div class="card-footer"><span>Architecture study</span><span aria-hidden="true">↗</span></div>
+            </article>
+
+            <article class="system-card accent-magenta">
+              <div class="card-topline"><span class="card-number">04</span><span class="status">Planned</span></div>
+              <div class="card-icon" aria-hidden="true"><span class="icon-bell"></span></div>
+              <h3>Notification System</h3>
+              <p>Resilient multi-channel delivery that absorbs spikes and manages retries without duplication.</p>
+              <ul class="tag-list" aria-label="Architecture focus">
+                <li>Message Queues</li><li>Event Streaming</li><li>Fan-Out</li><li>Retries</li>
+                <li>Backpressure</li><li>Rate Limiting</li><li>Idempotency</li>
+              </ul>
+              <div class="card-footer"><span>Architecture study</span><span aria-hidden="true">↗</span></div>
+            </article>
+
+            <article class="system-card accent-cyan">
+              <div class="card-topline"><span class="card-number">05</span><span class="status">Planned</span></div>
+              <div class="card-icon" aria-hidden="true"><span class="icon-feed"></span></div>
+              <h3>News Feed System <small>Facebook / Twitter</small></h3>
+              <p>Personalized timeline generation tuned for read-heavy workloads and uneven fan-out.</p>
+              <ul class="tag-list" aria-label="Architecture focus">
+                <li>Fan-Out on Write</li><li>Fan-Out on Read</li><li>Caching</li><li>Timeline Generation</li>
+                <li>Hot Users</li><li>Pagination</li><li>Read Scaling</li>
+              </ul>
+              <div class="card-footer"><span>Architecture study</span><span aria-hidden="true">↗</span></div>
+            </article>
+
+            <article class="system-card accent-green">
+              <div class="card-topline"><span class="card-number">06</span><span class="status">Planned</span></div>
+              <div class="card-icon" aria-hidden="true"><span class="icon-pin"></span></div>
+              <h3>Ride Matching System <small>Uber</small></h3>
+              <p>Regional, real-time coordination of moving drivers and riders through dynamic geospatial state.</p>
+              <ul class="tag-list" aria-label="Architecture focus">
+                <li>Geospatial Indexing</li><li>Real-Time Location Updates</li><li>Matching</li><li>Streaming</li>
+                <li>Dynamic State</li><li>Partitioning</li><li>Regional Scaling</li>
+              </ul>
+              <div class="card-footer"><span>Architecture study</span><span aria-hidden="true">↗</span></div>
+            </article>
+
+            <article class="system-card accent-indigo">
+              <div class="card-topline"><span class="card-number">07</span><span class="status">Planned</span></div>
+              <div class="card-icon" aria-hidden="true"><span class="icon-deploy"></span></div>
+              <h3>Code Deployment Platform</h3>
+              <p>Safe deployment orchestration with explicit state, progressive rollout, and deterministic recovery.</p>
+              <ul class="tag-list" aria-label="Architecture focus">
+                <li>Deployment Orchestration</li><li>State Machines</li><li>Worker Coordination</li>
+                <li>Canary Deployments</li><li>Blue-Green Deployments</li><li>Rollback</li><li>Failure Recovery</li>
+              </ul>
+              <div class="card-footer"><span>Architecture study</span><span aria-hidden="true">↗</span></div>
+            </article>
+
+            <article class="system-card accent-rose">
+              <div class="card-topline"><span class="card-number">08</span><span class="status">Planned</span></div>
+              <div class="card-icon" aria-hidden="true"><span class="icon-chart"></span></div>
+              <h3>Stock Trading Platform</h3>
+              <p>Auditable, durable order processing where deterministic sequencing and correctness dominate.</p>
+              <ul class="tag-list" aria-label="Architecture focus">
+                <li>Order Processing</li><li>Ordering Guarantees</li><li>Durability</li><li>Event Processing</li>
+                <li>Transactions</li><li>Idempotency</li><li>Auditability</li>
+              </ul>
+              <div class="card-footer"><span>Architecture study</span><span aria-hidden="true">↗</span></div>
+            </article>
+
+            <article class="system-card accent-teal">
+              <div class="card-topline"><span class="card-number">09</span><span class="status">Planned</span></div>
+              <div class="card-icon" aria-hidden="true"><span class="icon-clock"></span></div>
+              <h3>Distributed Job Scheduler</h3>
+              <p>Coordinated work execution with lease-based ownership and bounded duplicate processing.</p>
+              <ul class="tag-list" aria-label="Architecture focus">
+                <li>Worker Assignment</li><li>Leases</li><li>Heartbeats</li><li>Leader Election</li>
+                <li>Retries</li><li>Duplicate Prevention</li><li>Failure Recovery</li>
+              </ul>
+              <div class="card-footer"><span>Architecture study</span><span aria-hidden="true">↗</span></div>
+            </article>
+
+            <article class="system-card accent-purple">
+              <div class="card-topline"><span class="card-number">10</span><span class="status">Planned</span></div>
+              <div class="card-icon" aria-hidden="true"><span class="icon-database"></span></div>
+              <h3>Distributed Key-Value Store</h3>
+              <p>A partitioned storage substrate balancing availability, consistency, and operational elasticity.</p>
+              <ul class="tag-list" aria-label="Architecture focus">
+                <li>Consistent Hashing</li><li>Sharding</li><li>Replication</li><li>Quorum</li>
+                <li>CAP Trade-Offs</li><li>Rebalancing</li><li>Hot Partitions</li>
+              </ul>
+              <div class="card-footer"><span>Architecture study</span><span aria-hidden="true">↗</span></div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="framework section" id="framework" aria-labelledby="framework-title">
+        <div class="container">
+          <div class="framework-intro">
+            <div>
+              <p class="section-kicker">A consistent analytical lens</p>
+              <h2 id="framework-title">Architecture framework</h2>
+            </div>
+            <p>
+              Every study moves from workload definition to operational reality—connecting interface
+              and data decisions to scaling limits, guarantees, recovery behavior, and explicit trade-offs.
+            </p>
+          </div>
+
+          <ol class="framework-flow">
+            <li><span>01</span>Requirements</li>
+            <li><span>02</span>Scale</li>
+            <li><span>03</span>APIs</li>
+            <li><span>04</span>Data Model</li>
+            <li><span>05</span>High-Level Architecture</li>
+            <li><span>06</span>Data Flow</li>
+            <li><span>07</span>Partitioning</li>
+            <li class="framework-scale"><span>08</span><strong>Scaling</strong><small>10× → 100×</small></li>
+            <li><span>09</span>Consistency</li>
+            <li><span>10</span>Reliability</li>
+            <li><span>11</span>Failure Handling</li>
+            <li><span>12</span>Trade-Offs</li>
+          </ol>
+
+          <div class="scale-panel">
+            <div class="scale-panel-heading">
+              <span class="scale-icon" aria-hidden="true">↗</span>
+              <div><p>Scaling deep dive</p><h3>Designing beyond the first order of load</h3></div>
+            </div>
+            <ul class="question-grid">
+              <li><span>01</span>What becomes the bottleneck at 10× or 100× traffic?</li>
+              <li><span>02</span>How is data partitioned, and how are hot partitions handled?</li>
+              <li><span>03</span>How does the architecture scale horizontally?</li>
+              <li><span>04</span>What happens when a node or region fails?</li>
+              <li><span>05</span>What consistency guarantees are required?</li>
+              <li><span>06</span>How does the system recover?</li>
+              <li><span>07</span>Which workloads should be synchronous versus asynchronous?</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <span class="footer-mark" aria-hidden="true"></span>
+        <strong>Distributed Systems Design</strong>
+      </div>
+    </footer>
+  </body>
+</html>
