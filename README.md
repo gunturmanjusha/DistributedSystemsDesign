@@ -4,7 +4,7 @@
 
 ### 🌐 Explore the Architecture Portfolio
 
-> **[🚀 View Distributed Systems Design Portfolio](https://gunturmanjusha.github.io/DistributedSystemsDesign/)**
+> **[🚀 View Distributed Systems Design Portfolio](https://gunturmanjusha.github.io/DistributedSystemsDesign/docs/)**
 
 ---
 
@@ -34,4 +34,4 @@
 
 **Requirements** → **Scale** → **APIs** → **Data Model** → **Architecture** → **Data Flow** → **Partitioning** → 🚀 **Scaling** → **Consistency** → **Reliability** → **Failure Handling** → **Trade-Offs**
 
-Detailed architecture content and visual exploration are available in the [GitHub Pages portfolio](https://gunturmanjusha.github.io/DistributedSystemsDesign/).
+Detailed architecture content and visual exploration are available in the [GitHub Pages portfolio](https://gunturmanjusha.github.io/DistributedSystemsDesign/docs/).
