@@ -29,7 +29,7 @@
       <nav class="manual-tabs" aria-label="Interview study sections">
         <div class="container" role="tablist" aria-label="Slack interview chapters">
           <a id="tab-requirements" class="manual-tab is-active" role="tab" aria-selected="true" aria-controls="requirements" tabindex="0" href="#requirements" data-section="requirements"><b>1</b><span>Requirements &amp; Scope</span></a>
-          <a id="tab-scale" class="manual-tab" role="tab" aria-selected="false" aria-controls="scale" tabindex="-1" href="#scale" data-section="scale"><b>2</b><span>Scale &amp; Capacity<small>First Pass · 35%</small></span></a>
+          <a id="tab-scale" class="manual-tab" role="tab" aria-selected="false" aria-controls="scale" tabindex="-1" href="#scale" data-section="scale"><b>2</b><span>Scale &amp; Capacity<small>Designed · 90%</small></span></a>
           <a id="tab-apis" class="manual-tab" role="tab" aria-selected="false" aria-controls="apis" tabindex="-1" href="#apis" data-section="apis"><b>3</b><span>APIs &amp; Data Model<small class="status-pending">Not Started</small></span></a>
           <a id="tab-architecture" class="manual-tab" role="tab" aria-selected="false" aria-controls="architecture" tabindex="-1" href="#architecture" data-section="architecture"><b>4</b><span>High-Level Architecture<small>Initial · 40%</small></span></a>
           <a id="tab-flows" class="manual-tab" role="tab" aria-selected="false" aria-controls="flows" tabindex="-1" href="#flows" data-section="flows"><b>5</b><span>Critical End-to-End Flows<small>First Pass · 50%</small></span></a>
@@ -238,13 +238,309 @@
       </section>
 
       <section class="study-section interview-panel" id="scale" role="tabpanel" aria-labelledby="tab-scale" hidden>
-        <div class="container reading-container">
-          <div class="chapter-heading"><span>02</span><div><p>Scale &amp; Capacity</p><h2 id="scale-title">Turn assumptions into throughput</h2></div><b class="maturity maturity-first">First pass · ≈35%</b></div>
-          <article class="interview-answer"><span>What I would say in the interview</span><p>“I’ll use hypothetical planning numbers: 50 million daily active users, 100 messages per user per day, and 10 million peak concurrent connections. That is 5 billion messages per day, roughly 58 thousand writes per second on average, around 290 thousand at an illustrative 5× peak, and an initial target near 500 thousand writes per second with headroom. I’ll model fan-out separately because writes and deliveries are different workloads.”</p></article>
-          <div class="assumption-grid"><div class="metric-users"><strong>50M</strong><span>Daily Active Users</span><small>hypothetical</small></div><div class="metric-connections"><strong>10M</strong><span>Peak Connections</span><small>long-lived</small></div><div class="metric-volume"><strong>5B</strong><span>Messages / Day</span><small>derived</small></div><div class="metric-average"><strong>58K/s</strong><span>Average Writes</span><small>derived</small></div><div class="metric-peak"><strong>≈290K/s</strong><span>Illustrative Peak</span><small>5× average</small></div><div class="metric-target"><strong>≈500K/s</strong><span>Initial Target</span><small>headroom</small></div></div>
-          <div class="calculation-card"><div class="calculation-label"><span>Reusable calculation</span><strong>users × operations per user per day ÷ seconds per day</strong><small>Then estimate peak independently.</small></div><div class="calculation-steps"><div class="equation-step"><span>01</span><code>50,000,000 × 100</code><strong>= 5,000,000,000/day</strong></div><div class="equation-step"><span>02</span><code>5,000,000,000 ÷ 86,400</code><strong>≈ 58,000/sec</strong></div><div class="equation-step"><span>03</span><code>58,000 × 5</code><strong>≈ 290,000/sec</strong></div></div><p>Initial design target with headroom: <strong>≈500,000 message writes/sec</strong>.</p></div>
-          <aside class="critical-insight"><div class="insight-mark">!</div><div><p>Scaling implication</p><h3>Message writes/sec != message deliveries/sec</h3><div class="fanout-flow"><div><strong>1</strong><span>logical write</span></div><i>→</i><div><strong>100,000</strong><span>online users</span></div><i>→</i><div><strong>up to 100,000</strong><span>deliveries</span></div></div><p>Fan-out may eventually dominate ingestion. The fan-out architecture has not yet been designed.</p></div></aside>
-          <div class="open-questions"><span>Capacity analysis still required</span><ul><li>Message size and bandwidth</li><li>Storage per day and year</li><li>Replication overhead</li><li>Fan-out delivery volume</li><li>Reconnect burst traffic</li><li>10× and 100× traffic</li></ul></div>
+        <div class="container manual-content scale-content">
+          <header class="manual-section-heading">
+            <div><span>Section 2</span><h2 id="scale-title">Scale &amp; Capacity</h2><p>Turn workload assumptions into throughput, bandwidth, storage, connection, and burst-capacity requirements.</p></div>
+            <b class="maturity maturity-designed">Designed · Review Pending</b>
+          </header>
+
+          <nav class="local-toc" aria-label="Scale and capacity topics">
+            <a href="#scale-goal">Goal</a><a href="#scale-inputs">Inputs</a><a href="#scale-throughput">Throughput</a><a href="#scale-headroom">Headroom</a><a href="#scale-message-size">Message Size</a><a href="#scale-storage">Storage</a><a href="#scale-bandwidth">Bandwidth</a><a href="#scale-fanout">Fan-Out</a><a href="#scale-reads">Reads</a><a href="#scale-connections">Connections</a><a href="#scale-reconnect">Reconnect</a><a href="#scale-evolution">10×/100×</a><a href="#scale-decisions">Decisions</a><a href="#scale-answers">Answers</a><a href="#scale-checkpoint">Checkpoint</a>
+          </nav>
+
+          <div class="manual-prose" id="scale-goal">
+            <h3>What We Are Solving</h3>
+            <p>Capacity estimation converts product assumptions into the <strong>order-of-magnitude workload the architecture must sustain</strong>. The objective is not to guess Slack’s real production numbers. We use explicit hypothetical assumptions so later decisions about partitioning, storage, Kafka, WebSocket gateways, fan-out, sharding, and failure capacity are quantitatively defensible.</p>
+            <p>By the end of this section we should understand message ingestion, average and peak traffic, operating headroom, bursts, message size, logical and physical storage, outbox write amplification, network ingress, fan-out, history reads, persistent connections, heartbeat traffic, reconnect bursts, and the arithmetic pressure at 10× and 100×.</p>
+          </div>
+
+          <div class="table-scroll">
+            <table class="study-table capacity-dimensions">
+              <thead><tr><th>Capacity dimension</th><th>Question</th></tr></thead>
+              <tbody><tr><td><strong>Throughput</strong></td><td>How many operations or events per second must we process?</td></tr><tr><td><strong>Bandwidth</strong></td><td>How many bytes per second move through the system?</td></tr><tr><td><strong>Storage</strong></td><td>How many bytes accumulate over time?</td></tr><tr><td><strong>Concurrency</strong></td><td>How many requests or connections are active simultaneously?</td></tr><tr><td><strong>Fan-out</strong></td><td>How much downstream work does one logical write create?</td></tr></tbody>
+            </table>
+          </div>
+          <aside class="manual-invariant invariant-violet">A messaging system does not have one capacity number. <strong>500K messages/sec and 10M WebSocket connections are completely different capacity problems.</strong></aside>
+
+          <div class="manual-prose" id="scale-inputs">
+            <h3>Questions to Ask / Inputs to Establish</h3>
+            <p>Before calculating, ask for the workload shape. If the interviewer does not supply a value, state an assumption explicitly rather than presenting it as a universal fact.</p>
+          </div>
+          <div class="table-scroll">
+            <table class="study-table input-table">
+              <thead><tr><th>Input</th><th>Question to ask</th></tr></thead>
+              <tbody><tr><td><strong>User scale</strong></td><td>How many daily active users should we design for?</td></tr><tr><td><strong>Message frequency</strong></td><td>How many messages does an active user send per day?</td></tr><tr><td><strong>Concurrent usage</strong></td><td>How many client connections may be active simultaneously?</td></tr><tr><td><strong>Message size</strong></td><td>What is the approximate average persisted message/event size?</td></tr><tr><td><strong>Retention</strong></td><td>How long must authoritative message history be retained?</td></tr><tr><td><strong>Traffic shape</strong></td><td>How much higher is peak traffic than average traffic?</td></tr><tr><td><strong>Fan-out distribution</strong></td><td>What proportion is DMs versus channels, and how large are recipient sets?</td></tr><tr><td><strong>History reads</strong></td><td>How frequently do users load or paginate message history?</td></tr></tbody>
+            </table>
+          </div>
+
+          <div class="manual-prose">
+            <h3>Frozen Workload Inputs from Section 1</h3>
+          </div>
+          <div class="assumption-strip scale-assumptions" aria-label="Baseline workload assumptions"><div><strong>50M</strong><span>Daily Active Users</span></div><div><strong>100</strong><span>Messages / active user / day</span></div><div><strong>10M</strong><span>Peak client connections</span></div></div>
+          <div class="manual-prose">
+            <p>For this model, <code>10M</code> means peak <strong>client connections</strong>, not merely user identities. One user may have desktop, browser, and mobile connected simultaneously. If an interviewer instead gives 10M concurrent users, introduce a sessions-per-user factor:</p>
+          </div>
+          <pre class="study-formula"><code>connections
+= concurrent users × average active sessions/devices per user
+
+Example only: 10M × 1.3 = 13M connections</code></pre>
+          <p class="formula-note">The <code>1.3</code> factor is explanatory, not frozen. Gateway capacity must ultimately be based on connections.</p>
+
+          <div class="manual-prose" id="scale-throughput">
+            <h3>Write Throughput</h3>
+            <p>The baseline inputs first establish daily volume and then average ingestion. There are <code>86,400</code> seconds in a day.</p>
+          </div>
+          <pre class="study-formula formula-primary"><code>50,000,000 users × 100 messages/user/day
+= 5,000,000,000 messages/day
+
+5,000,000,000 ÷ 86,400
+≈ 57,870 messages/sec
+≈ 58K message writes/sec average</code></pre>
+          <aside class="study-callout callout-principle"><span>Reusable formula</span><p><code>average operations/sec = users × operations/user/day ÷ 86,400</code></p></aside>
+
+          <div class="manual-prose">
+            <h3>Average vs Peak vs Capacity Target</h3>
+            <p>An average is not a provisioning target. Messaging traffic varies by work hours, geography, incidents, major events, and exceptionally active channels. Using an <strong>illustrative 5× peak factor</strong> gives <code>58K/sec × 5 ≈ 290K writes/sec</code>. The factor is a planning assumption, not an industry standard.</p>
+            <p>The <code>≈500K/sec</code> value is an initial write-path capacity target with headroom—not another estimate of expected traffic.</p>
+          </div>
+          <div class="capacity-progression" aria-label="Average, peak, and capacity progression"><div><small>Daily average</small><strong>≈58K/sec</strong></div><i>× 5 modeled peak →</i><div><small>Modeled peak</small><strong>≈290K/sec</strong></div><i>headroom →</i><div><small>Capacity target</small><strong>≈500K/sec</strong></div></div>
+          <div class="table-scroll"><table class="study-table"><thead><tr><th>Number</th><th>Meaning</th></tr></thead><tbody><tr><td><code>≈58K/sec</code></td><td>Daily average message-write rate</td></tr><tr><td><code>≈290K/sec</code></td><td>Illustrative 5× modeled peak</td></tr><tr><td><code>≈500K/sec</code></td><td>Initial write-path capacity target with headroom</td></tr></tbody></table></div>
+          <pre class="study-formula"><code>290K ÷ 500K ≈ 58% modeled utilization
+≈42% instantaneous capacity margin
+
+500K ÷ 290K ≈ 1.72× modeled-peak capacity</code></pre>
+          <p class="formula-note">This is a working headroom model, not a rule that every production system must provision exactly 1.7× its predicted peak.</p>
+
+          <div class="manual-prose" id="scale-headroom">
+            <h3>Why Headroom Matters</h3>
+            <p>Headroom is not merely reserved for growth. It absorbs unexpected bursts, uneven partition distribution, rolling deployments, maintenance, retries, temporary downstream slowdown, forecasting error, and loss of instances or an availability zone.</p>
+            <h4>Capacity Under Failure</h4>
+            <p>Suppose the 500K/sec target is distributed evenly across three availability zones. Each zone contributes roughly 167K/sec. Losing one zone leaves approximately 333K/sec across the two survivors—above the 290K/sec modeled peak in this simplified calculation.</p>
+          </div>
+          <pre class="study-formula formula-warning"><code>Healthy:  3 zones × ≈167K/sec = ≈500K/sec
+1 AZ out: 2 zones × ≈167K/sec = ≈333K/sec
+Modeled peak                         ≈290K/sec</code></pre>
+          <p class="formula-note">Real deployments are not perfectly balanced, failover adds load, and operating at the exact saturation boundary is unsafe.</p>
+          <aside class="study-callout callout-warning"><span>Capacity principle</span><p><strong>Capacity planning should consider peak traffic after a failure, not only peak traffic when every component is healthy.</strong></p></aside>
+
+          <div class="manual-prose">
+            <h3>Global Peak vs Localized Hotspot</h3>
+            <p>A <strong>global peak</strong> makes large parts of the system busy together—for example, traffic moving from 58K/sec average to 290K/sec during a busy period. A <strong>localized hotspot</strong> overloads one partition, channel, shard, tenant, or region even when aggregate utilization is comfortable.</p>
+          </div>
+          <pre class="study-formula"><code>Entire cluster utilization = 50%
+but
+one Kafka partition        = 100%+</code></pre>
+          <aside class="manual-invariant">Healthy global capacity does not imply healthy per-partition capacity.</aside>
+          <p class="cross-reference">The hot-partition architecture is analyzed—not solved here—in <a class="section-reference" href="#scaling">Section 6 — Scaling Deep Dives</a>.</p>
+
+          <div class="manual-prose" id="scale-message-size">
+            <h3>Message Size: What Are We Counting?</h3>
+            <p>To convert message counts into bytes, use <strong>1 KB average persisted/event payload</strong> as a working interview assumption. Files remain out of scope. The estimate covers message text, identifiers such as <code>messageId</code>, <code>conversationId</code>, and <code>senderId</code>, timestamp, ordering metadata, flags, and basic envelope overhead.</p>
+            <p>This is a round order-of-magnitude input—not an industry standard or a claim about Slack. For simple interview arithmetic, use decimal units: <code>1 KB ≈ 1,000 bytes</code>, <code>1 TB ≈ 10¹² bytes</code>, and <code>1 PB ≈ 10¹⁵ bytes</code>.</p>
+            <p>Logical message size, database record size, Kafka wire size, and WebSocket wire size differ because of indexes, serialization, protocol headers, TLS, WAL, compression, and storage-engine metadata. Begin with application bytes, then layer on physical amplification.</p>
+            <h4>Message-Size Sensitivity</h4>
+          </div>
+          <div class="table-scroll"><table class="study-table numeric-table"><thead><tr><th>Avg persisted size</th><th>Logical storage/day</th><th>Logical storage/year</th></tr></thead><tbody><tr><td><code>0.5 KB</code></td><td><code>≈2.5 TB/day</code></td><td><code>≈0.91 PB/year</code></td></tr><tr><td><strong>1 KB</strong></td><td><strong>≈5 TB/day</strong></td><td><strong>≈1.83 PB/year</strong></td></tr><tr><td><code>2 KB</code></td><td><code>≈10 TB/day</code></td><td><code>≈3.65 PB/year</code></td></tr></tbody></table></div>
+          <aside class="study-callout callout-principle"><span>Learning point</span><p>When a capacity assumption is uncertain, use sensitivity analysis rather than pretending one estimate is precise.</p></aside>
+
+          <div class="manual-prose" id="scale-storage">
+            <h3>Authoritative Message Storage</h3>
+            <p>At the 1 KB working case, <code>5B messages/day × 1 KB ≈ 5 TB/day</code> of logical history. Across one year, <code>5 TB × 365 ≈ 1,825 TB ≈ 1.825 PB</code> before replication, indexes, metadata, backups, and storage-engine overhead.</p>
+            <p>This magnitude makes one unpartitioned database node implausible as the long-term message-history architecture. Storage partitioning is not premature optimization; it follows from the model. The final technology and shard key remain decisions for <a class="section-reference" href="#apis">Section 3 — APIs &amp; Data Model</a> and <a class="section-reference" href="#architecture">Section 4 — High-Level Architecture</a>.</p>
+            <h4>Logical vs Physical Storage</h4>
+            <p><strong>Logical storage</strong> is the application data represented by messages. <strong>Physical storage</strong> includes replication, indexes, WAL, metadata, compaction, backups, and temporary copies. With replication factor 3:</p>
+          </div>
+          <pre class="study-formula"><code>5 TB/day logical × 3 ≈ 15 TB/day replicated
+1.825 PB/year logical × 3 ≈ 5.475 PB/year replicated</code></pre>
+          <aside class="study-callout callout-assumption"><span>Working implication</span><p><strong>≈5.5 PB/year replicated message data</strong> before index, WAL, backup, and other overhead.</p><small>Retention, archive, tiering, compaction, and deletion may move data out of the hot tier; those policies are later decisions.</small></aside>
+
+          <div class="manual-prose">
+            <h3>Write Amplification from Message + Outbox</h3>
+            <p>The durable ACK contract from Section 1 means one accepted message creates at least one Message insert and one Outbox Event insert in the same transaction. At the 500K message-writes/sec capacity target, that is conceptually 500K message transactions/sec but at least <strong>1M primary row inserts/sec</strong>, before indexes, WAL, replication, and metadata.</p>
+            <p>This is capacity math, not a claim that one relational database instance can sustain 500K ACID transactions/sec. It explains why the durable write workload may later need partitioning.</p>
+            <h4>Outbox Byte Amplification</h4>
+            <p>If an outbox row stores a full event roughly comparable to the 1 KB payload, logical inserts may approach <code>5 TB/day message data + ≈5 TB/day outbox data = ≈10 TB/day</code> before replication and indexes.</p>
+            <p>The outbox is operational integration state, not permanent history. Processed records need not share message-history retention. Polling versus CDC such as Debezium is not decided here; Section 2 only records that each accepted message creates outbox write throughput and temporary storage volume. Transaction details continue in <a class="section-reference" href="#flows">Section 5 — Critical End-to-End Flows</a>.</p>
+          </div>
+
+          <div class="manual-prose">
+            <h3>Kafka Capacity Is Not Message-History Capacity</h3>
+            <p>The Message Store owns long-lived authoritative conversation history. Kafka provides durable event transport and buffering for asynchronous consumers, normally with a different retention window. At 1 KB and the average 5B events/day, Kafka receives approximately 5 TB/day logical event volume, or about 15 TB/day with replication factor 3, before compression and broker overhead.</p>
+          </div>
+          <div class="table-scroll"><table class="study-table numeric-table"><thead><tr><th>Kafka retention</th><th>Logical event data</th><th>RF=3 replicated data</th></tr></thead><tbody><tr><td><code>1 hour</code></td><td><code>≈0.21 TB</code></td><td><code>≈0.63 TB</code></td></tr><tr><td><code>24 hours</code></td><td><code>≈5 TB</code></td><td><code>≈15 TB</code></td></tr><tr><td><code>72 hours</code></td><td><code>≈15 TB</code></td><td><code>≈45 TB</code></td></tr></tbody></table></div>
+          <aside class="manual-invariant invariant-violet">Capacity target is not the same thing as expected sustained daily volume.</aside>
+          <p class="formula-note">These retention estimates use average daily workload; they do not assume the 500K/sec ceiling runs continuously for 24 hours.</p>
+
+          <div class="manual-prose" id="scale-bandwidth">
+            <h3>Ingress Bandwidth</h3>
+            <p>Convert the application payload rate to bytes, then bits. With a 1 KB payload:</p>
+          </div>
+          <pre class="study-formula"><code>bandwidth bytes/sec = messages/sec × average bytes/message
+bits/sec = bytes/sec × 8</code></pre>
+          <div class="table-scroll"><table class="study-table numeric-table"><thead><tr><th>Write rate</th><th>Application payload</th><th>Raw payload bandwidth</th></tr></thead><tbody><tr><td><code>58K/sec</code></td><td><code>≈58 MB/sec</code></td><td><code>≈0.46 Gbps</code></td></tr><tr><td><code>290K/sec</code></td><td><code>≈290 MB/sec</code></td><td><code>≈2.3 Gbps</code></td></tr><tr><td><code>500K/sec</code></td><td><code>≈500 MB/sec</code></td><td><code>≈4 Gbps</code></td></tr></tbody></table></div>
+          <p class="formula-note">This is application payload only. Database replication, outbox processing, Kafka publication and replication, service traffic, TLS, and protocol overhead increase internal traffic. Compression may help, but its ratio should be measured rather than assumed.</p>
+
+          <div class="manual-prose" id="scale-fanout">
+            <h3>Ingestion Is Not Delivery</h3>
+            <p><strong>One stored message can create many delivery operations.</strong> A DM has very low fan-out; small channels generate tens of deliveries; large channels may generate thousands; and a very large online channel may create 100,000 or more.</p>
+          </div>
+          <figure class="compact-fanout"><figcaption>One write does not mean one delivery</figcaption><div><strong>1</strong><span>stored message</span></div><i>→</i><div><strong>100,000</strong><span>online members</span></div><i>→</i><div><strong>up to 100,000</strong><span>delivery operations</span></div></figure>
+          <pre class="study-formula"><code>delivery operations/sec
+= message writes/sec × average online recipients/message</code></pre>
+          <div class="manual-prose">
+            <p>One overall average can conceal a heavy-tailed distribution. A defensible model segments DMs, small channels, medium channels, large channels, and extreme hot or celebrity channels. Exact delivery capacity requires the DM/channel mix, channel-size distribution, online-member percentage, and active sessions per recipient; we do not invent those percentages here.</p>
+          </div>
+          <div class="table-scroll"><table class="study-table"><thead><tr><th>Workload class</th><th>Delivery characteristic</th></tr></thead><tbody><tr><td>DM</td><td>Very low fan-out</td></tr><tr><td>Small channel</td><td>Low or moderate fan-out</td></tr><tr><td>Medium channel</td><td>Higher fan-out</td></tr><tr><td>Large channel</td><td>Large delivery amplification</td></tr><tr><td>Hot / celebrity channel</td><td>Extreme outlier workload</td></tr></tbody></table></div>
+
+          <div class="manual-prose">
+            <h3>Fan-Out Sensitivity Analysis</h3>
+            <p>At the hypothetical 500K writes/sec capacity ceiling, recipient count changes the downstream workload by orders of magnitude:</p>
+          </div>
+          <div class="table-scroll"><table class="study-table numeric-table"><thead><tr><th>Avg online recipients/message</th><th>Delivery operations/sec</th><th>Raw bandwidth at ≈1 KB</th></tr></thead><tbody><tr><td><code>1</code></td><td><code>500K/sec</code></td><td><code>≈4 Gbps</code></td></tr><tr><td><code>10</code></td><td><code>5M/sec</code></td><td><code>≈40 Gbps</code></td></tr><tr><td><code>100</code></td><td><code>50M/sec</code></td><td><code>≈400 Gbps</code></td></tr><tr><td><code>1,000</code></td><td><code>500M/sec</code></td><td><code>≈4 Tbps</code></td></tr></tbody></table></div>
+          <aside class="study-callout callout-warning"><span>Sensitivity—not a traffic forecast</span><p>Fan-out can dominate compute and network capacity even when ingestion looks manageable. Detailed fan-out architecture belongs in <a class="section-reference" href="#scaling">Section 6</a>.</p></aside>
+
+          <div class="manual-prose">
+            <h3>Multi-Device Delivery Amplifies Fan-Out Further</h3>
+            <p>A logical recipient may have desktop, browser, and mobile sessions active. The eventual relationship is closer to <code>delivery pushes = messages × online recipients × active recipient sessions</code>. Whether to push to every session or use another synchronization strategy is a later decision; this section records only the capacity implication.</p>
+          </div>
+
+          <div class="manual-prose" id="scale-reads">
+            <h3>History / Read Capacity</h3>
+            <p>The system has at least four major traffic classes: message writes, real-time deliveries, history/synchronization reads, and connection/reconnection traffic. History reads include opening a conversation, fetching the newest page, backward pagination, reconnect catch-up, gap recovery, and multi-device synchronization.</p>
+          </div>
+          <pre class="study-formula"><code>history request QPS
+= active users × history fetches/user/day ÷ 86,400 × peak factor
+
+message records read/sec
+= history request QPS × page size</code></pre>
+          <aside class="study-callout callout-assumption"><span>Illustrative example</span><p><code>10K history requests/sec × 50 messages/page = 500K message records/sec</code> before caching.</p></aside>
+          <div class="manual-prose"><p>There is no universal Slack read/write ratio. If read behavior is missing, say: “I would model history reads separately using conversation opens, pagination frequency, page size, and reconnect behavior rather than assuming they equal the message-write rate.”</p></div>
+
+          <div class="manual-prose" id="scale-connections">
+            <h3>Persistent WebSocket Connection Capacity</h3>
+            <p>The 10M connection requirement is independent of message QPS. Gateway count depends on a <strong>tested safe</strong> connection capacity, which varies with runtime and event-loop architecture, CPU, memory, file descriptors, TLS, message frequency, payload size, heartbeats, slow clients, and operating-system limits.</p>
+          </div>
+          <pre class="study-formula"><code>gateway count
+= total concurrent connections ÷ tested safe connections per gateway</code></pre>
+          <div class="table-scroll"><table class="study-table numeric-table"><thead><tr><th>Tested safe capacity/gateway</th><th>Gateways for 10M connections</th></tr></thead><tbody><tr><td><code>50K</code></td><td><code>≈200</code></td></tr><tr><td><code>100K</code></td><td><code>≈100</code></td></tr><tr><td><code>200K</code></td><td><code>≈50</code></td></tr></tbody></table></div>
+          <p class="formula-note">These are sensitivity examples, not recommendations. Load testing determines the safe number, and the fleet needs additional room for failure, deployments, skew, and churn. Routing and the connection registry remain later design work.</p>
+
+          <div class="manual-prose">
+            <h3>Connection Memory</h3>
+            <p>A mostly idle WebSocket is not free. It consumes socket and buffer state, TLS/session state, application metadata, and connection-registry state.</p>
+          </div>
+          <pre class="study-formula"><code>total connection memory
+= connections × memory footprint per connection</code></pre>
+          <div class="table-scroll"><table class="study-table numeric-table"><thead><tr><th>Memory/connection</th><th>Fleet memory for 10M connections</th></tr></thead><tbody><tr><td><code>10 KB</code></td><td><code>≈100 GB</code></td></tr><tr><td><code>50 KB</code></td><td><code>≈500 GB</code></td></tr><tr><td><code>100 KB</code></td><td><code>≈1 TB</code></td></tr></tbody></table></div>
+          <p class="formula-note">Examples only. Connection capacity cannot be inferred from ordinary HTTP request QPS.</p>
+
+          <div class="manual-prose">
+            <h3>Heartbeat / Control Traffic</h3>
+            <p>Persistent clients consume resources even without application messages. With 10M connections, one heartbeat per 30 seconds produces about 333K heartbeat events/sec; at 60 seconds it produces about 167K/sec. Ping and pong frames may increase control-frame volume.</p>
+          </div>
+          <pre class="study-formula"><code>10M ÷ 30 seconds ≈ 333K heartbeat events/sec
+10M ÷ 60 seconds ≈ 167K heartbeat events/sec</code></pre>
+          <aside class="manual-invariant">Long-lived connections create capacity load even when application message traffic is low.</aside>
+
+          <div class="manual-prose" id="scale-reconnect">
+            <h3>Reconnect Bursts</h3>
+            <p>Because Section 1 promises reconnect recovery, we must quantify churn before designing recovery. A reconnect does more than open a TCP socket: it may perform TLS setup, authentication, session validation, connection-registry updates, read-state synchronization, and missed-message recovery.</p>
+          </div>
+          <pre class="study-formula formula-warning"><code>reconnect attempts/sec
+= connections forced to reconnect ÷ recovery window
+
+10%: 1M ÷ 60 sec  ≈ 16.7K/sec
+25%: 2.5M ÷ 30 sec ≈ 83K/sec
+50%: 5M ÷ 60 sec  ≈ 83K/sec</code></pre>
+          <div class="manual-prose"><p>A storm simultaneously loads gateways, authentication, session/cache state, the connection registry, history reads, and replay/delivery systems. Rate limiting, jitter, backoff, and recovery behavior belong in <a class="section-reference" href="#reliability">Section 7 — Consistency, Reliability &amp; Failures</a>.</p></div>
+
+          <aside class="study-callout callout-principle">
+            <span>What I Should Know · Little’s Law</span>
+            <p>For a stable system, average concurrency is approximately throughput multiplied by average time in the system: <code>L = λW</code>.</p>
+            <p><code>L</code> is average in-flight work, <code>λ</code> is average throughput, and <code>W</code> is average time in the system.</p>
+          </aside>
+          <pre class="study-formula"><code>500K writes/sec × 0.2 sec average latency
+≈ 100K write operations in flight</code></pre>
+          <p class="formula-note">This is illustrative. Little’s Law assumes a stable system and uses averages; do not substitute a p95 latency as though it were the mean.</p>
+
+          <div class="manual-prose">
+            <h3>Utilization and Queueing</h3>
+            <p>Operating continuously near 100% utilization leaves little room for variance, retries, slowdown, or node failure. As arrival rate approaches service capacity, queues and tail latency become increasingly sensitive. If arrival rate exceeds capacity, backlog grows continuously.</p>
+          </div>
+          <pre class="study-formula formula-warning"><code>Incoming = 50K/sec
+Processing = 20K/sec
+Backlog growth = 30K/sec</code></pre>
+          <p class="cross-reference">Capacity headroom protects throughput and tail latency. Detailed hot-partition and consumer-lag behavior remains in <a class="section-reference" href="#scaling">Section 6</a>.</p>
+
+          <div class="manual-prose" id="scale-evolution">
+            <h3>10× / 100× Capacity Arithmetic</h3>
+            <p>This table applies stress multipliers; it is not a literal prediction of future DAU and does not design those architectures.</p>
+          </div>
+          <div class="table-scroll"><table class="study-table numeric-table wide-table"><thead><tr><th>Metric</th><th>Baseline</th><th>10× workload</th><th>100× workload</th></tr></thead><tbody><tr><td>Messages/day</td><td><code>5B</code></td><td><code>50B</code></td><td><code>500B</code></td></tr><tr><td>Avg writes/sec</td><td><code>≈58K</code></td><td><code>≈580K</code></td><td><code>≈5.8M</code></td></tr><tr><td>Illustrative 5× peak</td><td><code>≈290K/sec</code></td><td><code>≈2.9M/sec</code></td><td><code>≈29M/sec</code></td></tr><tr><td>Logical message storage/day</td><td><code>≈5 TB</code></td><td><code>≈50 TB</code></td><td><code>≈500 TB</code></td></tr><tr><td>Peak connections if linear</td><td><code>10M</code></td><td><code>100M</code></td><td><code>1B</code></td></tr></tbody></table></div>
+          <pre class="study-formula"><code>RF=3 message data only:
+Baseline ≈ 15 TB/day
+10×      ≈ 150 TB/day
+100×     ≈ 1.5 PB/day</code></pre>
+          <aside class="study-callout callout-warning"><span>Stress result</span><p><strong>The current ≈500K/sec target does not survive a linear 10× workload: the 10× average alone is ≈580K/sec.</strong></p><small>Indexes, WAL, backups, outbox, Kafka, and other copies are additional.</small></aside>
+          <p class="cross-reference"><a class="section-reference" href="#multiregion">Section 8 — 10×/100×, Multi-Region &amp; Trade-offs</a> will determine which components change, where regions enter, what is repartitioned, which guarantees become expensive, and how failover works.</p>
+
+          <div class="manual-prose" id="scale-decisions">
+            <h3>Capacity Conclusions That Drive Later Architecture</h3>
+          </div>
+          <ol class="capacity-conclusions"><li><strong>The write path must scale horizontally.</strong><span>A 290K/sec modeled peak and 500K/sec target cannot depend on one application process.</span></li><li><strong>The Message Store must eventually be partitioned.</strong><span>Approximately 1.8 PB/year logical growth makes a single-node long-term store unrealistic.</span></li><li><strong>Outbox traffic is not free.</strong><span>Every accepted message creates additional durable write work.</span></li><li><strong>Kafka and message-history capacity are separate.</strong><span>Kafka transports and buffers events; the Message Store retains authoritative history.</span></li><li><strong>Fan-out may dominate ingestion.</strong><span>One channel write may create thousands or hundreds of thousands of deliveries.</span></li><li><strong>WebSocket capacity is independent from write QPS.</strong><span>Connections add memory, file descriptors, heartbeats, routing, and churn.</span></li><li><strong>Reconnects are a burst workload.</strong><span>Network or gateway failures add connection attempts and synchronization reads together.</span></li><li><strong>Global capacity can hide localized saturation.</strong><span>A partition may overload while aggregate cluster utilization remains healthy.</span></li><li><strong>Capacity must include failure headroom.</strong><span>A design that works only when every node and zone is healthy is not highly available.</span></li><li><strong>10×/100× is not solved by adding servers blindly.</strong><span>Storage, partition skew, fan-out, connection routing, and regional boundaries scale differently.</span></li></ol>
+
+          <div class="manual-prose"><h3>Frozen Numbers / Assumptions</h3></div>
+          <div class="table-scroll"><table class="study-table frozen-capacity"><thead><tr><th>Item</th><th>Working value</th></tr></thead><tbody><tr><td>DAU</td><td><code>50M</code></td></tr><tr><td>Messages/user/day</td><td><code>100</code></td></tr><tr><td>Messages/day</td><td><code>5B</code></td></tr><tr><td>Average writes/sec</td><td><code>≈58K</code></td></tr><tr><td>Illustrative peak factor</td><td><code>5×</code></td></tr><tr><td>Modeled peak writes/sec</td><td><code>≈290K</code></td></tr><tr><td>Initial write-path target</td><td><code>≈500K/sec</code></td></tr><tr><td>Peak WebSocket connections</td><td><code>10M</code></td></tr><tr><td>Working message/event size</td><td><code>1 KB</code></td></tr><tr><td>Logical message storage/day</td><td><code>≈5 TB</code></td></tr><tr><td>Logical message storage/year</td><td><code>≈1.8 PB</code></td></tr><tr><td>RF=3 message storage/year</td><td><code>≈5.5 PB</code> before other overhead</td></tr><tr><td>Raw payload at 500K/sec</td><td><code>≈4 Gbps</code></td></tr></tbody></table></div>
+          <aside class="study-callout callout-assumption"><span>Assumption boundary</span><p>These are interview planning assumptions, not claims about Slack’s real production workload.</p></aside>
+
+          <div class="manual-prose"><h3>What I Should Know — Reusable Formulas</h3></div>
+          <div class="formula-reference"><code>Messages/day = users × messages/user/day</code><code>Average QPS = operations/day ÷ 86,400</code><code>Peak QPS = average QPS × peak factor</code><code>Logical storage = record count × average record size</code><code>Physical storage ≈ logical × replication factor + indexes/WAL/metadata/backups</code><code>Bandwidth = events/sec × bytes/event</code><code>Delivery rate = writes/sec × online recipients/message</code><code>Gateways = connections ÷ tested safe connections/gateway</code><code>Reconnect rate = reconnecting clients ÷ recovery window</code><code>Average in-flight work = throughput × average latency</code></div>
+
+          <section class="revision-section" id="scale-answers">
+            <h3>One-Line Interview Answers</h3>
+            <dl class="revision-answers">
+              <div><dt>Why calculate average QPS if we provision for peak?</dt><dd>Average establishes the base workload; peak and burst factors determine provisioning and headroom.</dd></div>
+              <div><dt>290K/sec vs 500K/sec?</dt><dd>290K/sec is the modeled peak; 500K/sec is capacity chosen to leave operating and failure headroom.</dd></div>
+              <div><dt>Why not use 500K/sec for daily storage?</dt><dd>It is an instantaneous capacity ceiling, not the expected rate sustained for all 86,400 seconds.</dd></div>
+              <div><dt>Logical message-storage growth?</dt><dd>At 5B/day and 1 KB/message, roughly 5 TB/day or 1.8 PB/year before replication and overhead.</dd></div>
+              <div><dt>Why is physical storage larger?</dt><dd>Replicas, indexes, WAL, metadata, backups, and temporary operational data amplify logical data.</dd></div>
+              <div><dt>How does the outbox affect capacity?</dt><dd>Each message transaction also writes an outbox event, adding row and byte amplification.</dd></div>
+              <div><dt>Why size Kafka separately?</dt><dd>Kafka is a retained event transport/buffer; the Message Store owns long-lived authoritative history.</dd></div>
+              <div><dt>Why can’t write QPS determine delivery QPS?</dt><dd>Delivery depends on DM/channel mix, channel sizes, online recipients, and active sessions.</dd></div>
+              <div><dt>What is fan-out?</dt><dd>The amplification from one logical message into delivery work for many recipients.</dd></div>
+              <div><dt>Why can fan-out dominate ingestion?</dt><dd>One message may be stored once but pushed to thousands or hundreds of thousands of sessions.</dd></div>
+              <div><dt>Why isn’t 10M connections another QPS number?</dt><dd>Connections are long-lived state consuming sockets, memory, heartbeats, routing, and reconnect capacity.</dd></div>
+              <div><dt>Why do heartbeats matter?</dt><dd>Millions of connections generate hundreds of thousands of control events/sec without user messages.</dd></div>
+              <div><dt>Why model reconnect bursts?</dt><dd>A failure can produce tens of thousands of handshakes/sec plus authentication and recovery reads.</dd></div>
+              <div><dt>Why does headroom matter?</dt><dd>It absorbs bursts, retries, variance, maintenance, and failure capacity loss while protecting tail latency.</dd></div>
+              <div><dt>Why can one workload fail while the cluster looks healthy?</dt><dd>Aggregate capacity can hide a hot partition, shard, channel, or region past its own limit.</dd></div>
+              <div><dt>What does Little’s Law tell us?</dt><dd>In a stable system, average in-flight concurrency is throughput multiplied by average time in system.</dd></div>
+            </dl>
+          </section>
+
+          <article class="spoken-answer">
+            <span>What I Would Say in the Interview</span>
+            <p>“For scale, I’ll start with explicit planning assumptions rather than pretend I know Slack’s production numbers. I’ll use 50 million daily active users, 100 messages per user per day, and 10 million peak client connections.</p>
+            <p>That gives me 5 billion messages per day, or roughly 58 thousand message writes per second on average. With an illustrative 5× peak, that is about 290 thousand writes per second. I would initially size the write path toward roughly 500 thousand per second so there is room for bursts and failures rather than designing exactly to the predicted peak.</p>
+            <p>I also would not treat message QPS as the whole capacity model. With a 1 KB working message size, we are already looking at roughly 5 TB of new logical message history per day, around 1.8 PB per year before replication. A message also creates outbox work, so durable write amplification is greater than one row per message.</p>
+            <p>More importantly, ingestion and delivery are different workloads. A DM may generate one delivery, while one large-channel message may generate thousands or hundreds of thousands. I would model fan-out from channel-size distributions and online-recipient counts rather than one arbitrary average.</p>
+            <p>The 10 million WebSocket connections are another independent dimension. I need to size gateway count, per-connection memory, heartbeat traffic, churn, and reconnect bursts separately from write QPS.</p>
+            <p>Those numbers identify where later architecture needs horizontal scale: the write service, durable store, event processing, fan-out delivery, and gateway tier. They also show why aggregate capacity is insufficient—we must detect hot partitions and localized bottlenecks separately.”</p>
+          </article>
+
+          <section class="checkpoint" id="scale-checkpoint">
+            <span>Interview Checkpoint</span><h3>Answer These Without Notes</h3>
+            <ol><li>How do 50M DAU and 100 messages/user/day become 5B messages/day?</li><li>How do 5B messages/day become approximately 58K writes/sec?</li><li>Why is average QPS not a provisioning target?</li><li>What does the illustrative 5× peak produce?</li><li>How do the 290K/sec peak and 500K/sec target differ?</li><li>Why is headroom necessary?</li><li>How does failover affect capacity planning?</li><li>How do global peaks and localized hotspots differ?</li><li>Why do we need a message-size assumption?</li><li>At 1 KB/message, what are daily and yearly logical storage?</li><li>How do logical and physical storage differ?</li><li>How does replication change storage?</li><li>How does the outbox amplify writes and bytes?</li><li>Why does Kafka retention differ from history retention?</li><li>Why is a capacity target not sustained daily volume?</li><li>How do messages/sec become bandwidth?</li><li>Why do write QPS and delivery QPS differ?</li><li>What is fan-out?</li><li>Why not use one average channel size blindly?</li><li>How can multiple devices increase pushes?</li><li>Why model history reads separately?</li><li>Why are WebSockets a separate dimension from QPS?</li><li>How do you estimate gateway count?</li><li>Why does per-connection memory matter?</li><li>How can 10M connections create hundreds of thousands of heartbeat events/sec?</li><li>How do you estimate reconnect attempts/sec?</li><li>Why does a reconnect storm affect more than gateways?</li><li>What does Little’s Law tell us?</li><li>Why does high utilization increase queueing and tail latency?</li><li>At 10×, what happens to the 500K/sec target?</li><li>Which architectural implications follow before selecting the full architecture?</li></ol>
+          </section>
+
+          <aside class="final-principles">
+            <span>Final Capacity Principles</span>
+            <p><strong>Average is not peak.</strong> <strong>Peak is not provisioned capacity.</strong> <strong>Capacity target is not sustained daily volume.</strong></p>
+            <p>Throughput, bandwidth, storage, and concurrency are different dimensions. Logical storage is not physical storage. Ingestion is not delivery. One logical user is not necessarily one connection.</p>
+            <p>Global spare capacity does not fix a localized hot partition. A highly available system needs enough capacity to survive failures—not only healthy-state traffic. At scale, model distributions and outliers, not only averages.</p>
+          </aside>
+
+          <footer class="section-next"><span>Section 2 · Designed · Review Pending</span><a class="section-reference" href="#apis">Continue to Section 3 — APIs &amp; Data Model →</a></footer>
         </div>
       </section>
 
