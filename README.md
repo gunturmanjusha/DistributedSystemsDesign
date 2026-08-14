@@ -2,18 +2,19 @@
 
 **Architecture studies of scalable distributed systems, focusing on scalability, partitioning, consistency, concurrency, reliability, fault tolerance, and high availability.**
 
-### 🌐 Explore the Architecture Portfolio
-
-> **[🚀 View Distributed Systems Design Portfolio](https://gunturmanjusha.github.io/DistributedSystemsDesign/docs/)**
+## [🌐 Explore Manjusha Guntur's Architecture Portfolio](https://gunturmanjusha.github.io/DistributedSystemsDesign/docs/)
 
 ---
 
 ## Architecture Focus
 
-| | | | |
-|:---|:---|:---|:---|
-| 🚀 **Scalability** | 🧩 **Partitioning** | 🔄 **Consistency** | ⚡ **Concurrency** |
-| 🛡️ **Fault Tolerance** | 🌐 **High Availability** | 📡 **Event-Driven Architecture** | 🌍 **Multi-Region Design** |
+| | | |
+|:---|:---|:---|
+| 🚀 **Scalability** | 🧩 **Partitioning** | 🔄 **Consistency** |
+| 🌐 **High Availability** | ◆ **Durability** | 🛡️ **Fault Tolerance** |
+| ⚡ **Concurrency & Ordering** | ⏱️ **Performance & Latency** | ◎ **Observability** |
+| 🌍 **Multi-Region Design** | 📡 **Async / Event-Driven Processing** | ↻ **Idempotency & Delivery Semantics** |
+| ≪ **Backpressure & Load Shedding** | ▤ **Data Storage & Replication** | 🔐 **Security & Access Control** |
 
 ## Systems
 
@@ -32,6 +33,4 @@
 
 ## Design Approach
 
-**Requirements** → **Scale** → **APIs** → **Data Model** → **Architecture** → **Data Flow** → **Partitioning** → 🚀 **Scaling** → **Consistency** → **Reliability** → **Failure Handling** → **Trade-Offs**
-
-Detailed architecture content and visual exploration are available in the [GitHub Pages portfolio](https://gunturmanjusha.github.io/DistributedSystemsDesign/docs/).
+**Requirements & Scope** → **Scale & Capacity** → **APIs & Data Model** → **High-Level Architecture** → **Critical End-to-End Flows** → **Scaling Deep Dives** → **Consistency, Reliability & Failures** → **10×/100×, Multi-Region & Trade-Offs**
