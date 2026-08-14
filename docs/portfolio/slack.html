@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Principal-level architecture portfolio study of a scalable real-time messaging system.">
+    <meta name="theme-color" content="#060c18">
+    <title>Real-Time Messaging — Portfolio View</title>
+    <link rel="stylesheet" href="../styles.css">
+  </head>
+  <body class="study-page portfolio-study">
+    <a class="skip-link" href="#main-content">Skip to content</a>
+
+    <header class="study-hero" id="top">
+      <nav class="site-nav container" aria-label="Primary navigation">
+        <a class="brand" href="../index.html" aria-label="Distributed Systems Design home">
+          <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+          <span>DS<span class="brand-accent">/</span>Design</span>
+        </a>
+        <div class="nav-links">
+          <a href="../index.html#systems">Systems</a>
+          <a href="#architecture">Architecture</a>
+          <a href="#scaling">Scaling</a>
+        </div>
+      </nav>
+
+      <div class="study-hero-grid container">
+        <div class="study-hero-copy">
+          <a class="back-link" href="../index.html#systems">← All architecture studies</a>
+          <p class="eyebrow"><span class="eyebrow-dot"></span> Design 01 · Portfolio view</p>
+          <h1><span class="hero-context">Slack / WhatsApp</span>Real-Time<br><span>Messaging</span></h1>
+          <p class="study-lede">Designing the core messaging path for low latency, durable delivery, ordered conversations, and massive real-time scale.</p>
+          <div class="study-badges" aria-label="Architecture focus">
+            <span>Real-Time Systems</span><span>WebSockets</span><span>Transactional Outbox</span>
+            <span>Kafka</span><span class="badge-scaling">Scaling Focus</span>
+          </div>
+          <div class="view-switcher" aria-label="Slack design views">
+            <span aria-current="page">Portfolio View</span>
+            <a href="../interview/slack.html">Interview Prep / Deep Dive →</a>
+          </div>
+        </div>
+        <aside class="study-status" aria-label="Architecture status">
+          <div class="status-line"><span class="status status-active">Architecture study</span><span>Core messaging plane</span></div>
+          <div class="study-stat"><strong>≈ 500K/s</strong><span>message-write<br>design target</span></div>
+          <div class="study-stat"><strong>10M</strong><span>peak concurrent<br>connections</span></div>
+          <div class="study-stat"><strong>Per conversation</strong><span>initial ordering boundary</span></div>
+          <p>Hypothetical capacity assumptions—not Slack production claims.</p>
+        </aside>
+      </div>
+    </header>
+
+    <main id="main-content">
+      <nav class="study-nav" aria-label="Architecture chapters">
+        <div class="container">
+          <a href="#requirements">1 · Requirements</a><a href="#scale">2 · Scale</a>
+          <a href="#apis">3 · APIs</a><a href="#architecture">4 · Architecture</a>
+          <a href="#flows">5 · Flows</a><a href="#scaling">6 · Deep Dives</a>
+          <a href="#reliability">7 · Reliability</a><a href="#tradeoffs">8 · 10×/100×</a>
+        </div>
+      </nav>
+
+      <section class="architecture-summary" aria-labelledby="summary-title">
+        <div class="container">
+          <div class="summary-heading"><div><span>Current architecture</span><h2 id="summary-title">Core message path</h2></div><p>Durable acceptance first. Delivery follows asynchronously.</p></div>
+          <div class="summary-flow" role="img" aria-label="Client through load balancer, messaging service, message store and outbox, Kafka, delivery service, WebSocket gateway, and recipient">
+            <div class="summary-node node-client"><span>01</span><strong>Client</strong></div><i>→</i>
+            <div class="summary-node node-network"><span>02</span><strong>Load Balancer</strong></div><i>→</i>
+            <div class="summary-node node-service"><span>03</span><strong>Messaging Service</strong></div><i>→</i>
+            <div class="summary-node node-storage"><span>04</span><strong>Message Store + Outbox</strong></div><i>→</i>
+            <div class="summary-node node-event"><span>05</span><strong>Kafka</strong></div><i>→</i>
+            <div class="summary-node node-delivery"><span>06</span><strong>Delivery Service</strong></div><i>→</i>
+            <div class="summary-node node-network"><span>07</span><strong>WebSocket Gateway</strong></div><i>→</i>
+            <div class="summary-node node-recipient"><span>08</span><strong>Recipient</strong></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="study-section" id="requirements" aria-labelledby="requirements-title">
+        <div class="container">
+          <div class="chapter-heading"><span>01</span><div><p>Requirements &amp; Scope</p><h2 id="requirements-title">Constrain the problem before selecting technologies</h2></div></div>
+          <div class="portfolio-prose">
+            <p>Slack as a complete product spans many independently difficult systems. This study deliberately isolates the core messaging plane: accepting direct and channel messages, preserving conversation history, delivering to connected users, and recovering after temporary disconnection. Narrowing the boundary is an architectural decision, not a simplification of the workload.</p>
+            <p>The messaging plane already combines durable writes, near-real-time delivery, conversation ordering, persistent history, millions of long-lived connections, high-fan-out channels, and offline recovery. Search, calls, integrations, file internals, threads, reactions, and push notifications are excluded so those distributed-systems concerns can be analyzed without conflating them with adjacent storage and media pipelines.</p>
+          </div>
+          <div class="scope-grid">
+            <article class="study-card scope-in"><div class="study-card-label"><span>✓</span>Core scope</div><h3>Messaging subsystem</h3><ul class="check-list"><li>One-to-one and channel messaging</li><li>Users in multiple channels</li><li>Near-real-time online delivery</li><li>Persistent history</li><li>Temporary disconnect and recovery</li></ul></article>
+            <article class="study-card scope-out"><div class="study-card-label"><span>—</span>Initially out of scope</div><h3>Adjacent product systems</h3><ul class="muted-list"><li>Voice/video and full-text search</li><li>Bots, integrations, and file internals</li><li>Threads, reactions, and push infrastructure</li></ul></article>
+          </div>
+          <div class="portfolio-prose portfolio-prose-compact">
+            <p>Functional requirements define <strong>what</strong> users can do: send a direct message, post to a channel, retrieve history, and receive messages after reconnecting. Non-functional requirements define <strong>how well</strong> the system must do it: low latency, durable acceptance, high availability, useful ordering, horizontal scalability, and failure tolerance at millions of concurrent connections.</p>
+            <p>Kafka, caching, WebSocket gateways, replication, load balancing, partitioning, and transactional outbox are implementation mechanisms. They become relevant only after a requirement establishes the problem each mechanism must solve.</p>
+          </div>
+          <div class="requirements-key"><div class="key-functional"><strong>WHAT</strong><span>the system does</span><b>Functional</b></div><i>→</i><div class="key-quality"><strong>HOW WELL</strong><span>it must do it</span><b>Non-functional</b></div><i>→</i><div class="key-decision"><strong>HOW</strong><span>we implement it</span><b>Architecture decision</b></div></div>
+          <aside class="portfolio-takeaway"><span>Principal takeaway</span><strong>Kafka, caches, and WebSocket gateways are mechanisms—not requirements.</strong></aside>
+        </div>
+      </section>
+
+      <section class="study-section" id="scale" aria-labelledby="scale-title">
+        <div class="container">
+          <div class="chapter-heading"><span>02</span><div><p>Scale &amp; Capacity</p><h2 id="scale-title">Establish the order of magnitude</h2></div></div>
+          <div class="portfolio-prose">
+            <p>Capacity planning begins with explicit, hypothetical assumptions rather than claims about Slack production traffic. At 50 million daily active users and 100 messages per active user per day, the system receives <code>50M × 100 = 5B messages/day</code>. Dividing by 86,400 seconds gives approximately <code>58K message writes/sec</code> on average.</p>
+            <p>An illustrative 5× peak raises that to approximately <code>290K writes/sec</code>. The working design target rounds upward to roughly <code>500K writes/sec</code> for initial headroom. These figures establish the order of magnitude for partitioning and throughput analysis; message size, bandwidth, storage growth, replication cost, reconnect bursts, and delivery amplification require separate models.</p>
+          </div>
+          <div class="assumption-grid" aria-label="Hypothetical capacity assumptions">
+            <div class="metric-users"><strong>50M</strong><span>Daily Active Users</span><small>assumption</small></div>
+            <div class="metric-connections"><strong>10M</strong><span>Peak Connections</span><small>long-lived sockets</small></div>
+            <div class="metric-volume"><strong>5B</strong><span>Messages / Day</span><small>50M × 100</small></div>
+            <div class="metric-average"><strong>58K/s</strong><span>Average Writes</span><small>5B ÷ 86,400</small></div>
+            <div class="metric-peak"><strong>≈ 290K/s</strong><span>Illustrative 5× Peak</span><small>burst estimate</small></div>
+            <div class="metric-target"><strong>≈ 500K/s</strong><span>Design Target</span><small>initial headroom</small></div>
+          </div>
+          <aside class="critical-insight"><div class="insight-mark">!</div><div><p>Critical scaling insight</p><h3>One write does not mean one delivery</h3><div class="fanout-flow"><div><strong>1</strong><span>logical write</span></div><i>→</i><div><strong>100,000</strong><span>online members</span></div><i>→</i><div><strong>up to 100,000</strong><span>real-time deliveries</span></div></div><p>A channel post creates one durable message write but may require a delivery operation for every online member. The write path and fan-out path therefore have fundamentally different capacity characteristics. Fan-out may dominate ingestion, but the final fan-out architecture is intentionally left as a scaling boundary rather than asserted without analysis.</p></div></aside>
+        </div>
+      </section>
+
+      <section class="study-section" id="apis" aria-labelledby="apis-title">
+        <div class="container">
+          <div class="chapter-heading"><span>03</span><div><p>APIs &amp; Data Model</p><h2 id="apis-title">Let access patterns shape the contract</h2></div><b class="maturity maturity-pending">Design consideration</b></div>
+          <div class="portfolio-prose">
+            <p>The public contract and persistent model will be driven by a small set of core access patterns: append a message, retrieve recent history, paginate backward through a conversation, validate conversation membership, and retain enough logical ordering information to detect gaps or resume after disconnection.</p>
+            <p>Endpoint schemas, identifier ownership, pagination cursors, storage technology, and the final history-partitioning key are not asserted here. Those choices depend on sequencing and reconnect semantics that must be made explicit first; publishing generic endpoints before those guarantees are defined would create false precision.</p>
+          </div>
+          <div class="pending-panel"><div><span>Design consideration</span><h3>The contract must align online delivery with durable history.</h3></div><ul><li>Append a message</li><li>Retrieve recent history</li><li>Paginate backward</li><li>Identify conversation membership</li><li>Maintain logical message order</li></ul></div>
+        </div>
+      </section>
+
+      <section class="study-section" id="architecture" aria-labelledby="architecture-title">
+        <div class="container">
+          <div class="chapter-heading"><span>04</span><div><p>High-Level Architecture</p><h2 id="architecture-title">Durable acceptance, decoupled delivery</h2></div></div>
+          <div class="portfolio-prose">
+            <p>The architecture separates message acceptance from real-time delivery because they carry different guarantees. The synchronous path is deliberately short: User A passes through the load balancer to the Messaging Service, which validates the request and commits the message together with its outbox event. Only that durable commit is required before the sender receives an acknowledgement.</p>
+            <p>Delivery to recipients then proceeds asynchronously through the Outbox Publisher, Kafka, the Delivery Service, and the WebSocket Gateway. The sender does not wait for every recipient lookup, network push, or temporarily unavailable client. This keeps downstream latency and partial failures out of the acceptance path while preserving the accepted message in the authoritative history.</p>
+            <p>Kafka provides a durable handoff between the committed write and independently scalable delivery workers. If delivery falls behind, the message is not lost and the sender-facing write path does not have to remain open; the operational consequence is consumer lag, which must be monitored because durable buffering protects correctness but does not guarantee real-time latency.</p>
+          </div>
+          <div class="architecture-diagram"><div class="diagram-lane lane-sync"><span>Synchronous acceptance</span></div><div class="architecture-flow"><div class="architecture-node node-user"><b>User A</b><small>sender</small></div><i>→</i><div class="architecture-node"><b>Load Balancer</b><small>route</small></div><i>→</i><div class="architecture-node"><b>Messaging Service</b><small>validate · authorize</small></div><i>→</i><div class="architecture-node node-durable"><b>Message Store + Outbox</b><small>atomic commit</small></div></div><div class="ack-flow"><span>✓ durable acceptance</span><b>ACK to User A</b><i>←</i></div><div class="diagram-lane lane-async"><span>Asynchronous delivery skeleton</span></div><div class="architecture-flow architecture-flow-async"><div class="architecture-node"><b>Outbox Publisher</b><small>retry publication</small></div><i>→</i><div class="architecture-node node-streaming"><b>Kafka</b><small>durable transport</small></div><i>→</i><div class="architecture-node"><b>Delivery Service</b><small>delivery unresolved</small></div><i>→</i><div class="architecture-node"><b>WebSocket Gateway</b><small>live connections</small></div><i>→</i><div class="architecture-node node-user"><b>User B</b><small>recipient</small></div></div></div>
+          <div class="component-grid portfolio-components">
+            <article class="component-card component-network"><div class="component-title"><span>01</span><h3>Load Balancer</h3><small>Sync · edge</small></div><p>Spreads incoming requests and connections across healthy instances. It owns no message history; health checks and connection distribution prevent one service node from becoming the entry-point bottleneck.</p></article>
+            <article class="component-card component-api"><div class="component-title"><span>02</span><h3>Messaging Service</h3><small>Sync · control</small></div><p>Authenticates, authorizes, validates, assigns message metadata, and coordinates persistence. It remains horizontally scalable by keeping durable conversation state in the store rather than process memory.</p></article>
+            <article class="component-card component-storage"><div class="component-title"><span>03</span><h3>Message Store</h3><small>Sync · authority</small></div><p>Owns durable conversation history and serves later history reads. Its partitioning, replication, and long-term growth model will determine whether the authoritative write path can sustain the target rate.</p></article>
+            <article class="component-card component-storage"><div class="component-title"><span>04</span><h3>Transactional Outbox</h3><small>Sync · bridge</small></div><p>Stores the durable intent to publish beside the message in one transaction. It closes the database/Kafka dual-write gap, while the publisher and outbox backlog become explicit retry and observability concerns.</p></article>
+            <article class="component-card component-event"><div class="component-title"><span>05</span><h3>Kafka</h3><small>Async · transport</small></div><p>Buffers accepted events and decouples downstream work from the write path. It owns an event log, not the normal conversation-history API; partition skew and consumer lag directly affect delivery latency.</p></article>
+            <article class="component-card component-delivery"><div class="component-title"><span>06</span><h3>Delivery Service</h3><small>Async · dispatch</small></div><p>Consumes accepted-message events and will coordinate recipient delivery. Recipient expansion, fan-out, retry, and backpressure are its central scaling boundaries rather than responsibilities hidden in the synchronous API.</p></article>
+            <article class="component-card component-network"><div class="component-title"><span>07</span><h3>WebSocket Gateway</h3><small>Async · connections</small></div><p>Owns live network connections and pushes events to connected clients. Gateway capacity, connection routing, slow clients, node failure, and reconnect behavior form a distinct connection-management problem.</p></article>
+            <article class="component-card component-cache"><div class="component-title"><span>08</span><h3>Cache</h3><small>Auxiliary · optional</small></div><p>May accelerate membership, metadata, session, or connection-routing lookups. It is not authoritative for message history, and its exact contents and consistency policy depend on the access paths still being refined.</p></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="study-section" id="flows" aria-labelledby="flows-title">
+        <div class="container">
+          <div class="chapter-heading"><span>05</span><div><p>Critical End-to-End Flows</p><h2 id="flows-title">Acknowledgement is a durability contract</h2></div></div>
+          <div class="portfolio-prose">
+            <p>Receiving a request is not the same as accepting a message. If the API returns success before persistence and then crashes, the sender has been promised a message that no longer exists. The acknowledgement boundary therefore sits after the authoritative database transaction: success means the system can recover the message even if the accepting service instance disappears immediately afterward.</p>
+            <p>A naïve implementation performs two independent writes—first inserting the message, then publishing <code>MessageCreated</code> to Kafka. Those operations are not one ordinary atomic transaction. If the database commits and the process crashes before publication, history contains the message while downstream delivery never receives the corresponding event.</p>
+            <p>The transactional outbox records both the message and its publication intent in the same database transaction. After commit, the sender can be acknowledged. A separate publisher reads committed outbox rows, publishes them to Kafka, and retries when Kafka or the publisher is temporarily unavailable. This moves publication retry off the user-facing critical path without losing the obligation to deliver.</p>
+          </div>
+          <aside class="invariant-callout"><span>System invariant</span><strong>If the sender receives a successful acknowledgement, the message has been durably accepted by the system.</strong></aside>
+          <div class="failure-comparison"><article class="failure-card failure-naive"><div class="study-card-label"><span>×</span>Naïve dual write</div><div class="dual-write-visual"><div><b>DB Write</b><span class="step-success">✓</span></div><i>then</i><div><b>Kafka Publish</b><span class="step-failure">×</span></div></div><p class="failure-result"><strong>History contains the message, but delivery loses its event.</strong></p></article><article class="failure-card failure-safe"><div class="study-card-label"><span>✓</span>Transactional outbox</div><div class="outbox-visual"><div class="atomic-box"><span>One transaction</span><strong>Message + Outbox Event</strong><b>COMMIT ✓</b></div><em>then</em><div class="publish-box"><strong>Publisher</strong><i>→</i><strong>Kafka</strong></div></div><p>Durable publication intent permits retry after Kafka or process failure.</p></article></div>
+          <aside class="portfolio-takeaway"><span>Architectural precision</span><strong>The outbox does not make Kafka infallible. It makes the authoritative database state and the durable intent to publish consistent.</strong></aside>
+        </div>
+      </section>
+
+      <section class="study-section" id="scaling" aria-labelledby="scaling-title">
+        <div class="container">
+          <div class="chapter-heading"><span>06</span><div><p>Scaling Deep Dives</p><h2 id="scaling-title">Connections, ordering, and the hot-channel limit</h2></div></div>
+          <div class="portfolio-subsection">
+            <div class="subsection-heading"><span>Connection architecture</span><h3>WebSockets create a stateful scaling dimension</h3></div>
+            <div class="portfolio-prose">
+              <p>Traditional HTTP request/response would require clients to poll for new messages, trading either frequent empty requests or higher delivery latency. A WebSocket begins with an HTTP handshake and becomes a long-lived bidirectional connection, allowing the gateway to push an accepted message to an already connected client.</p>
+              <p>At approximately 10 million concurrent users, this is not merely an HTTP requests-per-second problem. The gateway tier must collectively maintain millions of live sockets and their associated connection state. The tier scales horizontally, but capacity per gateway, connection distribution, <code>userId → gateway</code> routing, slow-client backpressure, gateway failure, and controlled reconnection are separate design concerns that cannot be inferred from write throughput.</p>
+            </div>
+            <div class="protocol-comparison"><article class="protocol-card protocol-http"><div class="protocol-title"><span>HTTP</span><div><h3>Polling</h3><p>Repeated request / response</p></div></div><div class="protocol-flow"><b>Client</b><i>Request →</i><b>Server</b></div><div class="protocol-flow protocol-return"><b>Client</b><i>← Response</i><b>Server</b></div></article><div class="protocol-vs">VS</div><article class="protocol-card protocol-websocket"><div class="protocol-title"><span>WS</span><div><h3>WebSocket</h3><p>Long-lived bidirectional channel</p></div></div><div class="protocol-flow persistent-flow"><b>Client</b><i>⇄ persistent ⇄</i><b>Gateway</b></div></article></div>
+            <aside class="scaling-note"><span>Scaling boundary</span><strong>Ten million connected users imply approximately ten million long-lived network connections—not merely more HTTP requests per second.</strong></aside>
+          </div>
+          <div class="portfolio-subsection">
+            <div class="subsection-heading"><span>Ordering boundary</span><h3>Order a conversation, not the entire system</h3></div>
+            <div class="portfolio-prose">
+              <p>Global ordering across every message would serialize unrelated conversations and sharply limit parallelism. The useful boundary is a logical conversation or channel: related events should retain partition-local order, while independent conversations should be free to progress concurrently.</p>
+              <p>Using <code>conversationId</code> as the Kafka key hashes every event for a conversation to the same physical partition. Millions of conversations do not require millions of partitions; many logical identifiers share a manageable set of physical partitions. This is an effective first partitioning strategy, but it also makes a single extreme conversation subject to the throughput ceiling of one partition and its assigned consumer.</p>
+            </div>
+            <div class="ordering-principle"><strong>Ordering where it matters;</strong><span>parallelism everywhere else.</span></div>
+          <div class="partition-layout"><div class="partition-rule"><p>Initial Kafka key</p><code>key = conversationId</code><span>partition = hash(conversationId) % partitionCount</span></div><div class="partition-map"><div class="conversation"><strong>C123</strong><span>M1</span><span>M2</span><span>M3</span></div><div class="map-arrow">→</div><div class="physical-partition"><small>hash(C123) → Kafka</small><strong>Partition 17</strong><span>M1 → M2 → M3</span></div><div class="conversation"><strong>C999</strong><span>N1</span><span>N2</span></div><div class="map-arrow">→</div><div class="physical-partition partition-alt"><small>independent work</small><strong>Partition 18</strong><span>N1 → N2</span></div></div></div>
+            <p class="portfolio-supporting-copy">A topic is physically partitioned, and each consumer group independently consumes those partitions. Within one consumer group, a particular partition is assigned to one consumer at a time. Adding consumers increases parallelism only while partitions are available to distribute; it does not divide the work of one hot partition among multiple consumers.</p>
+          </div>
+          <div class="portfolio-subsection hot-subsection">
+            <div class="subsection-heading"><span>Throughput boundary</span><h3>A hot conversation can outrun its partition</h3></div>
+            <div class="portfolio-prose">
+              <p>Consider a channel producing 50,000 messages per second while the assigned downstream consumer can process 20,000. The backlog grows by 30,000 records every second: 300,000 are waiting after ten seconds and 1.8 million after one minute. End-to-end delivery latency rises continuously even if brokers, gateways, and unrelated partitions remain healthy.</p>
+              <p>The cluster may have unused capacity elsewhere, but partition affinity keeps this conversation constrained to one consumer within the group. Adding more consumers does not automatically parallelize that partition. The design has therefore reached a genuine trade-off: one conversation key simplifies ordering, while extreme channel throughput requires additional parallelism.</p>
+            </div>
+          <div class="hot-partition-card"><div><span>Bottleneck identified</span><h3>50K/s in · 20K/s processed</h3><strong>30K/s backlog growth</strong></div><div class="lag-timeline"><span><b>1 sec</b>30K waiting</span><span><b>10 sec</b>300K waiting</span><span><b>60 sec</b>1.8M waiting</span></div><p>Availability can remain green while delivery latency becomes unacceptable. Adding consumers does not split one partition inside one consumer group.</p></div>
+            <aside class="portfolio-takeaway portfolio-takeaway-violet"><span>Operational reality</span><strong>Availability and real-time performance are different properties. A system can remain technically available while backlog growth makes the user experience operationally unacceptable.</strong></aside>
+            <aside class="tension-card"><div><span>Ordering pressure</span><strong>Strict conversation-wide ordering favors serialization.</strong></div><i>VS</i><div><span>Throughput pressure</span><strong>Extreme throughput favors parallelism.</strong></div></aside>
+            <p class="portfolio-supporting-copy"><strong>Scaling boundary:</strong> the next decision must reconcile useful conversation ordering with enough parallelism for an exceptionally hot channel. No final hot-channel strategy is claimed here.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="study-section" id="reliability" aria-labelledby="reliability-title">
+        <div class="container">
+          <div class="chapter-heading"><span>07</span><div><p>Consistency, Reliability &amp; Failures</p><h2 id="reliability-title">State each guarantee at its real boundary</h2></div></div>
+          <div class="portfolio-prose">
+            <p>The strongest current guarantee is durable acceptance: a successful sender acknowledgement follows the authoritative message-and-outbox commit. This protects the write from an immediate service crash and distinguishes acceptance from eventual recipient delivery. The Message Store remains the source for history; Kafka transports committed events and absorbs temporary downstream interruption.</p>
+            <p>Conversation-key partitioning supplies ordering within a Kafka partition, not a complete user-visible sequencing model. Concurrent senders, retries, duplicate events, replay, and missing sequence detection still require explicit semantics. Similarly, the outbox preserves publication intent but does not by itself provide exactly-once delivery to a client.</p>
+            <p>Failure analysis must therefore follow state ownership. Messaging Service failure after commit is recoverable because durable state exists. Kafka or publisher interruption can delay delivery while the outbox retains work. Gateway failure affects live connections and requires reconnection and missed-message recovery behavior. Those connection and delivery semantics remain design considerations rather than implied guarantees.</p>
+          </div>
+          <div class="portfolio-decision-grid"><article class="decision-green"><span>Guarantee</span><h3>Durable acknowledgement</h3><p>Success follows authoritative persistence of the message and outbox intent.</p></article><article class="decision-violet"><span>Ordering boundary</span><h3>Per conversation</h3><p>No global order; partition affinity is useful but not a complete sequencing model.</p></article><article class="decision-coral"><span>Failure protection</span><h3>Dual-write gap</h3><p>The transactional outbox preserves a retryable publication obligation.</p></article><article class="decision-amber"><span>Design consideration</span><h3>Delivery semantics</h3><p>Retries, duplicates, replay, backpressure, and reconnect recovery need explicit contracts.</p></article></div>
+        </div>
+      </section>
+
+      <section class="study-section" id="tradeoffs" aria-labelledby="tradeoffs-title">
+        <div class="container">
+          <div class="chapter-heading"><span>08</span><div><p>10×/100×, Multi-Region &amp; Trade-offs</p><h2 id="tradeoffs-title">Scale Evolution — To Be Stress-Tested</h2></div><b class="maturity maturity-pending">Further evolution</b></div>
+          <div class="portfolio-prose">
+            <p>Scaling is not a multiplication exercise applied only to message writes. The architecture must be stress-tested component by component to identify the first saturated resource, the state that remains centralized, and the partition key that concentrates load. Storage throughput, Kafka partition skew, connection routing, reconnect bursts, and fan-out amplification can become limiting at very different points.</p>
+            <p>At extreme scale, the design must also test whether its guarantees remain affordable. Multi-region routing and failover introduce latency, replication, ordering, and consistency boundaries that cannot be resolved by capacity arithmetic alone. The next evolution will make those trade-offs explicit before assigning a 10× or 100× architecture.</p>
+          </div>
+          <div class="open-question-grid evolution-grid"><article class="challenge-card challenge-scale"><span>SAT</span><h3>Which component saturates first?</h3><p>Evaluate storage, Kafka, connection routing, and fan-out independently.</p></article><article class="challenge-card challenge-scale"><span>HOT</span><h3>Where is state or load concentrated?</h3><p>Find centralized state and partition keys that become operational choke points.</p></article><article class="challenge-card challenge-region"><span>MR</span><h3>Which guarantees cross regions?</h3><p>Test how routing, replication, failover, ordering, and consistency interact.</p></article></div>
+          <aside class="principal-lens"><div class="lens-heading"><span>⌁</span><div><p>Principal-level design lens</p><h3>Interrogate every component</h3></div></div><ol><li><span>01</span>What problem does it solve?</li><li><span>02</span>What state does it own?</li><li><span>03</span>How is that state partitioned?</li><li><span>04</span>What breaks at 10× or 100×?</li><li><span>05</span>What happens when it fails?</li></ol></aside>
+          <div class="view-switcher view-switcher-bottom"><span aria-current="page">Portfolio View</span><a href="../interview/slack.html">Continue to Interview Prep / Deep Dive →</a></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer"><div class="container"><span class="footer-mark"></span><strong>Distributed Systems Design</strong></div></footer>
+  </body>
+</html>
