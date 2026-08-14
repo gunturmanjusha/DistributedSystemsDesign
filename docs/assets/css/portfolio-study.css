@@ -1013,6 +1013,28 @@ body.portfolio-study {
   text-decoration: none;
 }
 
+.portfolio-study .site-footer.identity-footer {
+  color: var(--article-muted);
+  background:
+    radial-gradient(circle at 85% 25%, rgba(104, 70, 199, 0.12), transparent 25rem),
+    linear-gradient(135deg, #f7fbff 0%, #f7f5fc 55%, #f8fafb 100%);
+  border-top: 1px solid var(--article-line);
+}
+
+.portfolio-study .site-footer.identity-footer .container,
+.portfolio-study .site-footer.identity-footer .footer-author {
+  width: 100%;
+  justify-content: center;
+  justify-items: center;
+  text-align: center;
+}
+
+.portfolio-study .site-footer.identity-footer .footer-author strong { color: var(--article-navy); }
+.portfolio-study .site-footer.identity-footer .footer-author span { color: var(--article-muted); }
+.portfolio-study .site-footer.identity-footer .footer-author a { color: var(--article-violet); }
+.portfolio-study .site-footer.identity-footer .footer-author a:hover,
+.portfolio-study .site-footer.identity-footer .footer-author a:focus-visible { color: var(--article-blue); }
+
 @media (max-width: 900px) {
   .portfolio-study .architecture-flow {
     display: grid;

@@ -5124,8 +5124,12 @@ a {
     linear-gradient(180deg, #f8fbff, #f2f6fb);
 }
 
-.landing-page .section h2 {
-  font-size: clamp(1.75rem, 2.7vw, 2.5rem);
+.landing-page .principles h2,
+.landing-page .framework h2,
+.landing-page .systems h2 {
+  font-size: clamp(1.4rem, 2vw, 1.85rem);
+  letter-spacing: -0.025em;
+  line-height: 1.18;
 }
 
 .landing-page .principles .section-heading,
@@ -5152,7 +5156,7 @@ a {
 
 .landing-page .section-heading-inline > p {
   max-width: 780px;
-  margin: 14px 0 0;
+  margin: 9px 0 0;
 }
 
 .landing-page .framework {
@@ -5173,7 +5177,6 @@ a {
 
 .landing-page .framework h2 {
   color: #0a1930;
-  font-size: clamp(1.75rem, 2.7vw, 2.5rem);
 }
 
 .landing-page .framework-intro > p {
@@ -5187,7 +5190,7 @@ a {
 
 .landing-page .framework-intro > p {
   max-width: 900px;
-  margin: 13px 0 0;
+  margin: 9px 0 0;
 }
 
 .landing-page .framework-flow {

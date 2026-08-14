@@ -496,6 +496,13 @@ body.interview-manual {
     radial-gradient(circle at 88% 10%, rgba(104, 70, 199, 0.28), transparent 26rem),
     linear-gradient(120deg, #10213b, #152942 70%, #17233d);
 }
+.interview-manual .site-footer.identity-footer .container,
+.interview-manual .site-footer.identity-footer .footer-author {
+  width: 100%;
+  justify-content: center;
+  justify-items: center;
+  text-align: center;
+}
 
 @media (max-width: 1020px) {
   .interview-manual .manual-tabs .container { grid-template-columns: repeat(4, minmax(0, 1fr)); }
