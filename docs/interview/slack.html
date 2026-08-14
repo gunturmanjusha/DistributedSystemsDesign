@@ -29,7 +29,7 @@
       <nav class="manual-tabs" aria-label="Interview study sections">
         <div class="container" role="tablist" aria-label="Slack interview chapters">
           <a id="tab-requirements" class="manual-tab is-active" role="tab" aria-selected="true" aria-controls="requirements" tabindex="0" href="#requirements" data-section="requirements"><b>1</b><span>Requirements &amp; Scope</span></a>
-          <a id="tab-scale" class="manual-tab" role="tab" aria-selected="false" aria-controls="scale" tabindex="-1" href="#scale" data-section="scale"><b>2</b><span>Scale &amp; Capacity<small>Designed · 90%</small></span></a>
+          <a id="tab-scale" class="manual-tab" role="tab" aria-selected="false" aria-controls="scale" tabindex="-1" href="#scale" data-section="scale"><b>2</b><span>Scale &amp; Capacity</span></a>
           <a id="tab-apis" class="manual-tab" role="tab" aria-selected="false" aria-controls="apis" tabindex="-1" href="#apis" data-section="apis"><b>3</b><span>APIs &amp; Data Model<small class="status-pending">Not Started</small></span></a>
           <a id="tab-architecture" class="manual-tab" role="tab" aria-selected="false" aria-controls="architecture" tabindex="-1" href="#architecture" data-section="architecture"><b>4</b><span>High-Level Architecture<small>Initial · 40%</small></span></a>
           <a id="tab-flows" class="manual-tab" role="tab" aria-selected="false" aria-controls="flows" tabindex="-1" href="#flows" data-section="flows"><b>5</b><span>Critical End-to-End Flows<small>First Pass · 50%</small></span></a>
@@ -241,7 +241,6 @@
         <div class="container manual-content scale-content">
           <header class="manual-section-heading">
             <div><span>Section 2</span><h2 id="scale-title">Scale &amp; Capacity</h2><p>Turn workload assumptions into throughput, bandwidth, storage, connection, and burst-capacity requirements.</p></div>
-            <b class="maturity maturity-designed">Designed · Review Pending</b>
           </header>
 
           <nav class="local-toc" aria-label="Scale and capacity topics">
@@ -347,6 +346,12 @@ one Kafka partition        = 100%+</code></pre>
             <h3>Authoritative Message Storage</h3>
             <p>At the 1 KB working case, <code>5B messages/day × 1 KB ≈ 5 TB/day</code> of logical history. Across one year, <code>5 TB × 365 ≈ 1,825 TB ≈ 1.825 PB</code> before replication, indexes, metadata, backups, and storage-engine overhead.</p>
             <p>This magnitude makes one unpartitioned database node implausible as the long-term message-history architecture. Storage partitioning is not premature optimization; it follows from the model. The final technology and shard key remain decisions for <a class="section-reference" href="#apis">Section 3 — APIs &amp; Data Model</a> and <a class="section-reference" href="#architecture">Section 4 — High-Level Architecture</a>.</p>
+            <h4>Retention Sensitivity</h4>
+            <p>Retention converts daily growth into the footprint the storage architecture must hold: <code>retained logical storage = daily storage growth × retention days</code>.</p>
+          </div>
+          <div class="table-scroll"><table class="study-table numeric-table"><thead><tr><th>Retention</th><th>Logical storage</th><th>3 copies</th></tr></thead><tbody><tr><td><code>30 days</code></td><td><code>≈150 TB</code></td><td><code>≈450 TB</code></td></tr><tr><td><code>90 days</code></td><td><code>≈450 TB</code></td><td><code>≈1.35 PB</code></td></tr><tr><td><code>1 year</code></td><td><code>≈1.825 PB</code></td><td><code>≈5.475 PB</code></td></tr></tbody></table></div>
+          <p class="formula-note">Retention policy is a product/business requirement. This calculation establishes storage pressure; hot, warm, and archive tiering are architecture decisions handled later.</p>
+          <div class="manual-prose">
             <h4>Logical vs Physical Storage</h4>
             <p><strong>Logical storage</strong> is the application data represented by messages. <strong>Physical storage</strong> includes replication, indexes, WAL, metadata, compaction, backups, and temporary copies. With replication factor 3:</p>
           </div>
@@ -458,10 +463,12 @@ message records read/sec
             <span>What I Should Know · Little’s Law</span>
             <p>For a stable system, average concurrency is approximately throughput multiplied by average time in the system: <code>L = λW</code>.</p>
             <p><code>L</code> is average in-flight work, <code>λ</code> is average throughput, and <code>W</code> is average time in the system.</p>
+            <p><strong>If the system is actually processing a steady 500K writes/sec and mean time in the modeled subsystem is 200 ms:</strong></p>
           </aside>
-          <pre class="study-formula"><code>500K writes/sec × 0.2 sec average latency
+          <pre class="study-formula"><code>L = λW
+500K writes/sec × 0.2 sec mean time
 ≈ 100K write operations in flight</code></pre>
-          <p class="formula-note">This is illustrative. Little’s Law assumes a stable system and uses averages; do not substitute a p95 latency as though it were the mean.</p>
+          <p class="formula-note">This is illustrative. Little’s Law uses observed stable throughput and averages—not provisioned capacity. Do not substitute a p95 latency as though it were the mean.</p>
 
           <div class="manual-prose">
             <h3>Utilization and Queueing</h3>
@@ -540,7 +547,7 @@ Baseline ≈ 15 TB/day
             <p>Global spare capacity does not fix a localized hot partition. A highly available system needs enough capacity to survive failures—not only healthy-state traffic. At scale, model distributions and outliers, not only averages.</p>
           </aside>
 
-          <footer class="section-next"><span>Section 2 · Designed · Review Pending</span><a class="section-reference" href="#apis">Continue to Section 3 — APIs &amp; Data Model →</a></footer>
+          <footer class="section-next"><a class="section-reference" href="#apis">Continue to Section 3 — APIs &amp; Data Model →</a></footer>
         </div>
       </section>
 

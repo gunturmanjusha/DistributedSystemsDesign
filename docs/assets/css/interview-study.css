@@ -430,16 +430,6 @@ body.interview-manual {
 }
 
 /* Section 2 capacity chapter: dense handbook visuals, scoped to this panel. */
-.interview-manual .scale-content .manual-section-heading .maturity {
-  align-self: center;
-}
-
-.interview-manual .maturity-designed {
-  border-color: rgb(22 163 111 / 32%);
-  color: #087b54;
-  background: #edf9f4;
-}
-
 .interview-manual .scale-content .study-table {
   max-width: 980px;
 }
@@ -774,7 +764,6 @@ body.interview-manual {
   .interview-manual .study-section { padding: 1.2rem 0 2rem; }
   .interview-manual .manual-section-heading { display: block; }
   .interview-manual .manual-section-heading > a { display: inline-block; margin-top: 0.45rem; }
-  .interview-manual .scale-content .manual-section-heading .maturity { display: inline-block; margin-top: 0.5rem; }
   .interview-manual .scope-columns { grid-template-columns: 1fr; gap: 0.8rem; }
   .interview-manual .scope-columns ul { columns: 1; }
   .interview-manual .reasoning-chain { align-items: stretch; flex-direction: column; }
