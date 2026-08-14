@@ -7,63 +7,237 @@
     <meta name="theme-color" content="#060c18">
     <title>Real-Time Messaging — Interview Prep / Deep Dive</title>
     <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../assets/css/interview-study.css">
+    <script src="../assets/js/interview-study.js" defer></script>
   </head>
-  <body class="study-page interview-study">
+  <body class="study-page interview-study interview-manual">
     <a class="skip-link" href="#main-content">Skip to content</a>
 
-    <header class="study-hero interview-hero" id="top">
-      <nav class="site-nav container" aria-label="Primary navigation">
-        <a class="brand" href="../index.html" aria-label="Distributed Systems Design home"><span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span><span>DS<span class="brand-accent">/</span>Design</span></a>
-        <div class="nav-links"><a href="../index.html#systems">Systems</a><a href="#progress">Progress</a><a href="#scaling">Scaling</a></div>
+    <header class="manual-header" id="top">
+      <nav class="manual-topbar container" aria-label="Primary navigation">
+        <span class="manual-brand">Distributed Systems Design</span>
+        <div><a href="../portfolio/slack.html">Portfolio View</a><a href="../index.html">All System Designs</a></div>
       </nav>
-      <div class="study-hero-grid container">
-        <div class="study-hero-copy">
-          <a class="back-link" href="../index.html#systems">← All architecture studies</a>
-          <p class="eyebrow"><span class="eyebrow-dot"></span> Design 01 · Interview prep / deep dive</p>
-          <h1><span class="hero-context">Slack / WhatsApp</span>Real-Time<br><span>Messaging</span></h1>
-          <p class="study-lede">A living study reference for explaining, defending, and stress-testing a scalable messaging architecture in a 45-minute system-design conversation.</p>
-          <div class="view-switcher" aria-label="Slack design views"><a href="../portfolio/slack.html">← Portfolio View</a><span aria-current="page">Interview Prep / Deep Dive</span></div>
-        </div>
-        <aside class="study-status"><div class="status-line"><span class="status status-active">In progress</span><span>Not a finished architecture</span></div><div class="study-stat"><strong>8</strong><span>standard interview<br>chapters</span></div><div class="study-stat"><strong>First pass</strong><span>current maturity</span></div><div class="study-stat"><strong>Scaling</strong><span>primary learning emphasis</span></div><p>Only decisions from the design discussion are represented as decisions.</p></aside>
+      <div class="manual-heading container">
+        <p class="manual-kicker">Design 01 · Interview Prep / Deep Dive</p>
+        <h1>Slack / WhatsApp — Real-Time Messaging System</h1>
+        <p class="manual-subtitle">Principal/Architect System Design Interview Study Guide</p>
       </div>
     </header>
 
     <main id="main-content">
-      <nav class="study-nav" aria-label="Interview chapters"><div class="container"><a href="#requirements">1 · Requirements</a><a href="#scale">2 · Scale</a><a href="#apis">3 · APIs</a><a href="#architecture">4 · Architecture</a><a href="#flows">5 · Flows</a><a href="#scaling">6 · Deep Dives</a><a href="#reliability">7 · Reliability</a><a href="#tradeoffs">8 · 10×/100×</a></div></nav>
+      <nav class="manual-tabs" aria-label="Interview study sections">
+        <div class="container" role="tablist" aria-label="Slack interview chapters">
+          <a id="tab-requirements" class="manual-tab is-active" role="tab" aria-selected="true" aria-controls="requirements" tabindex="0" href="#requirements" data-section="requirements"><b>1</b><span>Requirements &amp; Scope</span></a>
+          <a id="tab-scale" class="manual-tab" role="tab" aria-selected="false" aria-controls="scale" tabindex="-1" href="#scale" data-section="scale"><b>2</b><span>Scale &amp; Capacity<small>First Pass · 35%</small></span></a>
+          <a id="tab-apis" class="manual-tab" role="tab" aria-selected="false" aria-controls="apis" tabindex="-1" href="#apis" data-section="apis"><b>3</b><span>APIs &amp; Data Model<small class="status-pending">Not Started</small></span></a>
+          <a id="tab-architecture" class="manual-tab" role="tab" aria-selected="false" aria-controls="architecture" tabindex="-1" href="#architecture" data-section="architecture"><b>4</b><span>High-Level Architecture<small>Initial · 40%</small></span></a>
+          <a id="tab-flows" class="manual-tab" role="tab" aria-selected="false" aria-controls="flows" tabindex="-1" href="#flows" data-section="flows"><b>5</b><span>Critical End-to-End Flows<small>First Pass · 50%</small></span></a>
+          <a id="tab-scaling" class="manual-tab" role="tab" aria-selected="false" aria-controls="scaling" tabindex="-1" href="#scaling" data-section="scaling"><b>6</b><span>Scaling Deep Dives<small>Initial · 20%</small></span></a>
+          <a id="tab-reliability" class="manual-tab" role="tab" aria-selected="false" aria-controls="reliability" tabindex="-1" href="#reliability" data-section="reliability"><b>7</b><span>Consistency, Reliability &amp; Failures<small>First Pass · 25%</small></span></a>
+          <a id="tab-multiregion" class="manual-tab" role="tab" aria-selected="false" aria-controls="multiregion" tabindex="-1" href="#multiregion" data-section="multiregion"><b>8</b><span>10×/100×, Multi-Region &amp; Trade-offs<small class="status-pending">Initial · 5%</small></span></a>
+        </div>
+      </nav>
 
-      <section class="progress-section" id="progress" aria-labelledby="progress-title">
-        <div class="container">
-          <div class="summary-heading"><div><span>Living design status</span><h2 id="progress-title">Progress by interview chapter</h2></div><p>Percentages indicate discussion coverage, not production readiness or completion.</p></div>
-          <div class="progress-grid">
-            <a href="#requirements" style="--progress:65%"><span>01</span><b>Requirements &amp; Scope</b><i>First pass · ≈65%</i></a>
-            <a href="#scale" style="--progress:35%"><span>02</span><b>Scale &amp; Capacity</b><i>First pass · ≈35%</i></a>
-            <a href="#apis" class="progress-pending" style="--progress:0%"><span>03</span><b>APIs &amp; Data Model</b><i>Not yet designed</i></a>
-            <a href="#architecture" style="--progress:40%"><span>04</span><b>High-Level Architecture</b><i>Initial skeleton · ≈40%</i></a>
-            <a href="#flows" style="--progress:50%"><span>05</span><b>Critical End-to-End Flow</b><i>Write path partial · ≈50%</i></a>
-            <a href="#scaling" style="--progress:20%"><span>06</span><b>Scaling Deep Dives</b><i>Initial · ≈20%</i></a>
-            <a href="#reliability" style="--progress:25%"><span>07</span><b>Consistency &amp; Failures</b><i>First pass · ≈25%</i></a>
-            <a href="#tradeoffs" style="--progress:5%"><span>08</span><b>10×/100× &amp; Multi-Region</b><i>Barely started</i></a>
+      <section class="study-section interview-panel is-active" id="requirements" role="tabpanel" aria-labelledby="tab-requirements">
+        <div class="container manual-content">
+          <header class="manual-section-heading">
+            <div><span>Section 1</span><h2 id="requirements-title">Requirements &amp; Scope</h2><p>Freeze the behavioral contract, workload assumptions, and system guarantees before selecting technologies.</p></div>
+          </header>
+
+          <div class="manual-prose" id="req-scope">
+            <h3>What We Are Solving</h3>
+            <p>We are designing the <strong>core real-time messaging subsystem</strong> of a Slack/WhatsApp-style platform—not the entire product. The system must support direct and channel messaging, durable history, near-real-time delivery to connected users, temporary disconnection and recovery, millions of persistent connections, concurrent desktop/browser/mobile sessions, and synchronization of state such as read position across devices.</p>
+            <p>The point of this phase is to make the contract explicit. By its end, we should know the scope, workload assumptions, latency and availability targets, durability invariant, ordering boundary, cross-device consistency model, and baseline fault-tolerance expectation.</p>
           </div>
-          <div class="maturity-legend"><span><i class="legend-first"></i>INITIAL / FIRST PASS</span><span><i class="legend-designed"></i>DESIGNED</span><span><i class="legend-tested"></i>STRESS TESTED</span><span><i class="legend-pending"></i>NOT YET DESIGNED</span></div>
+
+          <aside class="study-callout callout-question">
+            <span>Question to ask the interviewer</span>
+            <p>Are we designing the entire Slack/WhatsApp product or only the core messaging subsystem?</p>
+            <strong>Decision: focus on the core messaging subsystem.</strong>
+          </aside>
+
+          <div class="scope-columns">
+            <section><h3>In Scope</h3><ul><li>One-to-one direct messaging</li><li>Channel/group messaging and membership</li><li>Sending and receiving messages</li><li>Persistent history and history retrieval</li><li>Near-real-time online delivery</li><li>Disconnect, reconnect, and missed-message recovery</li><li>Multiple active devices per user</li><li>Cross-device read/unread synchronization</li></ul></section>
+            <section><h3>Out of Scope</h3><ul><li>Voice and video calling</li><li>Full-text search</li><li>Bots and integrations</li><li>File-storage internals</li><li>Threads and reactions</li><li>Push-notification infrastructure</li></ul></section>
+          </div>
+          <div class="manual-prose"><p>These can be independent subsystems or future extensions. Excluding them keeps the interview centered on acceptance, persistence, ordering, partitioning, fan-out, connection management, reconnect, and recovery.</p></div>
+
+          <div class="manual-prose" id="req-types">
+            <h3>Functional vs Non-Functional vs Architecture Decisions</h3>
+            <p>This distinction prevents premature technology selection. A capability such as synchronizing read state is functional; the decision that read state may temporarily diverge but must converge quickly is a consistency requirement; the storage and event mechanisms used to achieve that are architecture decisions.</p>
+          </div>
+
+          <div class="table-scroll">
+            <table class="study-table comparison-table">
+              <thead><tr><th>Category</th><th>Question it answers</th><th>Examples</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Functional</strong></td><td>What does the system do?</td><td>Send a channel message; retrieve history; recover messages missed offline; synchronize read state.</td></tr>
+                <tr><td><strong>Non-functional</strong></td><td>How well must it behave?</td><td>Latency, availability, durability, ordering, consistency, scalability, and fault tolerance.</td></tr>
+                <tr><td><strong>Architecture decision</strong></td><td>How will we satisfy the requirement?</td><td><code>Kafka</code>, WebSockets, replication, partitioning, transactional outbox, and caching.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="reasoning-chain" aria-label="Senior-level architecture reasoning chain">
+            <span>Requirement</span><i>↓</i><span>Constraint</span><i>↓</i><span>Architecture problem</span><i>↓</i><span>Design choice</span><i>↓</i><span>Trade-off</span>
+          </div>
+          <div class="manual-prose">
+            <p>Example: the requirement that acknowledged messages must not be lost creates a consistency problem between durable database persistence and downstream event publication. A transactional outbox is a possible design response. The mechanism follows the requirement; it is not the starting point.</p>
+          </div>
+          <aside class="study-callout callout-principle"><span>Senior-level rule</span><p>Do not begin requirements gathering with “I would use Kafka, Redis, and WebSockets.” First establish the problem each mechanism must solve.</p></aside>
+
+          <div class="manual-prose" id="req-workload">
+            <h3>Establish the Workload</h3>
+            <p>Ask how many users are active daily, how many messages each active user sends, and how many users may be connected simultaneously. When the interviewer does not supply values, state assumptions clearly.</p>
+          </div>
+          <div class="assumption-strip" aria-label="Section 1 workload assumptions"><div><strong>50M</strong><span>Daily Active Users</span></div><div><strong>100</strong><span>messages / active user / day</span></div><div><strong>10M</strong><span>peak concurrent connections</span></div></div>
+          <div class="manual-prose">
+            <p>Do not perform the full capacity calculation during requirements gathering. These values become inputs to <a class="section-reference" href="#scale">Section 2 — Scale &amp; Capacity</a>, where we derive write QPS, delivery QPS, bandwidth, storage growth, replication overhead, gateway capacity, reconnect bursts, and 10×/100× pressure points.</p>
+          </div>
+          <figure class="compact-diagram fanout-example"><figcaption>Important scaling insight: ingestion is not delivery.</figcaption><code>1 stored channel message</code><i>→</i><code>100,000 online members</code><i>→</i><code>up to 100,000 delivery operations</code></figure>
+          <div class="manual-prose"><p>The fan-out path may be significantly more expensive than the write path. Section 1 freezes that observation; detailed calculation belongs in Section 2 and fan-out architecture belongs in <a class="section-reference" href="#scaling">Section 6 — Scaling Deep Dives</a>.</p></div>
+
+          <div class="manual-prose" id="req-latency">
+            <h3>Latency Requirements</h3>
+            <p><strong>Question to ask:</strong> What does “real time” mean for this system? Do not reduce latency to one number. Sender acknowledgement and recipient delivery traverse different boundaries and should have separate SLOs.</p>
+          </div>
+          <div class="path-comparison"><div><strong>Sender ACK latency</strong><code>Client sends → durable acceptance → sender success</code><p>Determines how responsive sending feels.</p></div><div><strong>Online delivery latency</strong><code>Message accepted → delivery pipeline → connected recipient</code><p>Measures the asynchronous real-time experience.</p></div></div>
+
+          <div class="manual-prose">
+            <h4>What I Should Know — p50, p95, and p99</h4>
+            <p>Average latency can hide a poor tail. Percentiles describe the distribution and make the slowest user experiences visible.</p>
+          </div>
+          <div class="table-scroll">
+            <table class="study-table metric-table"><thead><tr><th>Metric</th><th>Meaning</th><th>Why it matters</th></tr></thead><tbody><tr><td><code>p50</code></td><td>50% complete at or below this latency.</td><td>Median or typical experience.</td></tr><tr><td><code>p95</code></td><td>95% complete at or below it; 5% are slower.</td><td>Common service-level view of a meaningful tail.</td></tr><tr><td><code>p99</code></td><td>99% complete at or below it; 1% are slower.</td><td>Exposes severe tail behavior that averages conceal.</td></tr></tbody></table>
+          </div>
+          <aside class="study-callout callout-assumption"><span>Illustrative interview design assumptions</span><div class="slo-lines"><code>Sender ACK: p95 &lt; 200–300 ms</code><code>Online recipient delivery: p95 &lt; 500 ms</code><code>Tail delivery: p99 &lt; 1 second under normal operation</code></div><p>These are explicit working assumptions, not universal Slack or industry standards. Replace them when the interviewer supplies requirements.</p></aside>
+          <div class="manual-prose"><p>A sub-second target does not follow automatically from availability. If 50,000 events/sec arrive while consumers process 20,000/sec, the service can remain up while backlog grows by 30,000/sec and delivery becomes minutes late. <strong>Availability does not imply acceptable latency.</strong> The hot-partition and consumer-lag analysis continues in Section 6.</p></div>
+
+          <div class="manual-prose" id="req-availability">
+            <h3>Availability Requirements</h3>
+            <p><strong>Question to ask:</strong> What availability level should the core messaging service provide? Assume high availability: failure of one Messaging Service instance, gateway, Kafka broker/consumer, cache node, or storage replica should not collapse the entire messaging system.</p>
+            <p>An availability SLO measures the proportion of valid service requests successfully served over a measurement window. Values such as <code>99.9%</code>, <code>99.95%</code>, and <code>99.99%</code> represent different error budgets and operational investments; there is no universal target for every messaging system.</p>
+          </div>
+          <aside class="study-callout callout-assumption"><span>Illustrative interview design assumption</span><p>Use approximately <code>99.99%</code> availability for the core messaging path only if the interviewer requires a number and provides none.</p></aside>
+          <div class="table-scroll">
+            <table class="study-table comparison-table"><thead><tr><th>Property</th><th>Question</th><th>Implication</th></tr></thead><tbody><tr><td><strong>Availability</strong></td><td>Can the service successfully handle valid requests now?</td><td>Depends on redundancy, failover, and operational health.</td></tr><tr><td><strong>Durability</strong></td><td>Will previously accepted data survive failures?</td><td>Depends on the acknowledgement boundary and replicated persistence.</td></tr></tbody></table>
+          </div>
+          <aside class="study-callout callout-warning"><span>Critical distinction</span><p><code>99.99%</code> availability does <strong>not</strong> mean losing <code>0.01%</code> of messages is acceptable. Availability and durability are independent guarantees.</p></aside>
+
+          <div class="manual-prose" id="req-durability">
+            <h3>Durability Requirements</h3>
+            <p><strong>Critical question to ask:</strong> Once the sender receives a successful acknowledgement, may the system permanently lose that message? For this design, the answer is no.</p>
+          </div>
+          <blockquote class="manual-invariant">If the sender receives a successful acknowledgement, the message has been durably accepted by the system.</blockquote>
+          <div class="failure-example"><strong>Unsafe acknowledgement</strong><code>1. Client sends M100
+2. Messaging Service receives M100
+3. Service returns SUCCESS
+4. Process crashes before persistence
+5. M100 no longer exists</code><p>The service made a promise it cannot keep.</p></div>
+          <div class="manual-prose">
+            <p>Required semantics are conceptually <code>receive → durably persist → acknowledge</code>. The precise store and outbox mechanics belong in <a class="section-reference" href="#architecture">Section 4 — High-Level Architecture</a> and <a class="section-reference" href="#flows">Section 5 — Critical Flows</a>.</p>
+          </div>
+          <aside class="study-callout callout-decision"><span>Exact Sender ACK Boundary</span><p>For this design, the sender receives a successful ACK only after the authoritative database transaction containing both the message and its outbox event commits successfully.</p></aside>
+          <figure class="compact-diagram"><figcaption>Exact synchronous boundary</figcaption><code>Client sends message</code><i>→</i><code>Messaging Service validates</code><i>→</i><code>BEGIN TRANSACTION<br>persist Message<br>persist Outbox Event<br>COMMIT</code><i>→</i><code>Successful ACK</code></figure>
+          <div class="manual-prose">
+            <p>The sender does not wait for <code>Outbox Publisher → Kafka publication → Delivery Service → WebSocket push → recipient delivery → recipient read</code>. <strong>Sender ACK means durable server acceptance, not recipient delivery.</strong> This keeps the synchronous write path short while delivery continues asynchronously.</p>
+            <p>If Kafka is temporarily unavailable after commit, the ACK remains valid: the authoritative message is durable, the atomically committed outbox record preserves the publication obligation, and the Outbox Publisher can retry later. Database persistence without the corresponding outbox intent is not sufficient for this design. Detailed outbox mechanics remain in Sections 4 and 5.</p>
+            <h4>Do Not Confuse Acceptance, Delivery, and Read</h4>
+          </div>
+          <div class="table-scroll"><table class="study-table comparison-table"><thead><tr><th>State</th><th>Meaning</th></tr></thead><tbody><tr><td><strong>Accepted / Sender ACK</strong></td><td>The server has durably accepted the message.</td></tr><tr><td><strong>Delivered</strong></td><td>The message has reached a recipient client/device according to delivery semantics defined later.</td></tr><tr><td><strong>Read</strong></td><td>The recipient has opened or advanced past the message and read state has been recorded.</td></tr></tbody></table></div>
+          <blockquote class="manual-invariant invariant-violet">Accepted ≠ Delivered ≠ Read</blockquote>
+          <figure class="compact-diagram"><figcaption>Separate product semantics</figcaption><code>Sender ACK<br>message is durable</code><i>→ later →</i><code>Recipient device receives message<br>delivered</code><i>→ later →</i><code>Recipient opens conversation<br>read</code></figure>
+          <div class="manual-prose">
+            <p>Section 1 establishes only that these states are different. Delivery receipts, exactly-once delivery, read receipts, and per-device acknowledgement mechanisms belong primarily in Sections 3, 5, and 7.</p>
+            <p>“Kafka must be 100% available” is the wrong requirement: Kafka may be temporarily unavailable while authoritative acceptance remains safe. “100% durability” is also not a useful absolute claim across every imaginable correlated disaster. State the actual guarantee instead:</p>
+          </div>
+          <aside class="study-callout callout-decision"><span>Frozen durability requirement</span><p>The design targets <strong>zero acknowledged-message loss within its defined failure model</strong>.</p><small>The baseline model includes process, machine, individual broker, and individual storage-node failures. Regional disaster and correlated replica loss require Section 8 decisions.</small></aside>
+          <div class="manual-prose">
+            <h4>Failure Model and Fault Domains</h4>
+            <p>The baseline guarantee covers independent component failures. Correlated fault-domain failures have a wider blast radius and require replication topology and failover decisions that are intentionally deferred.</p>
+          </div>
+          <div class="table-scroll"><table class="study-table comparison-table"><thead><tr><th>Failure category</th><th>Examples</th><th>Design scope</th></tr></thead><tbody><tr><td><strong>Independent component failure</strong></td><td>Process failure; application-instance failure; machine/node failure; individual Kafka broker failure; individual storage-node/replica failure.</td><td>Covered by the baseline failure model.</td></tr><tr><td><strong>Correlated fault-domain failure</strong></td><td>Availability-zone failure; regional failure; correlated replica loss.</td><td>Requires explicit replication topology, failover, and multi-region decisions in Section 8.</td></tr></tbody></table></div>
+          <aside class="study-callout callout-principle"><span>Failure-model principle</span><p><strong>A durability guarantee is meaningful only when the failure model it is designed to survive is stated explicitly.</strong></p></aside>
+
+          <div class="manual-prose" id="req-ordering">
+            <h3>Ordering Requirements</h3>
+            <p><strong>Question to ask:</strong> Is ordering required globally, per user, or per conversation/channel? Global Slack-wide ordering provides little user value and forces coordination between unrelated conversations.</p>
+          </div>
+          <div class="ordering-example"><div><strong>Channel A</strong><code>A1 → A2 → A3</code></div><div><strong>Channel B</strong><code>B1 → B2 → B3</code></div><p>No useful requirement establishes whether <code>A2</code> globally preceded <code>B2</code>.</p></div>
+          <blockquote class="manual-invariant invariant-violet">Preserve meaningful ordering within a logical conversation or channel—not globally.</blockquote>
+          <div class="manual-prose"><p>Within conversation <code>C123</code>, infrastructure should not arbitrarily expose <code>M1, M3, M2</code> when the messages have an established order. Unrelated conversations should progress independently: <strong>ordering where ordering matters; parallelism everywhere else.</strong></p><p>Section 1 defines the boundary, not the implementation. Simultaneous senders, sequence assignment, retries, duplicates, gaps, hot channels, and cross-partition behavior are deferred to Sections 3, 6, and 7.</p></div>
+
+          <div class="manual-prose" id="req-consistency">
+            <h3>Multi-Device Consistency</h3>
+            <p><strong>Question to ask:</strong> If the same account is active on desktop and mobile, how consistent must state be across devices? Separate durable message history from mutable user metadata.</p>
+          </div>
+          <div class="table-scroll"><table class="study-table comparison-table"><thead><tr><th>State</th><th>Required behavior</th><th>Consistency decision</th></tr></thead><tbody><tr><td><strong>Message history</strong></td><td>All devices converge on the same accepted conversation history.</td><td>Authoritative durable data; a message cannot permanently exist for one device but not another.</td></tr><tr><td><strong>Read/unread position</strong></td><td>A read on one device propagates to other sessions.</td><td>Fast eventual consistency; brief divergence is acceptable, indefinite divergence is not.</td></tr></tbody></table></div>
+          <figure class="compact-diagram"><figcaption>Cross-device read-state convergence</figcaption><code>Desktop reads M100</code><i>→</i><code>Server persists authoritative read position</code><i>→</i><code>Mobile receives or retrieves update</code><i>→</i><code>state converges</code></figure>
+          <div class="manual-prose"><p>Synchronous coordination with every device before updating the desktop UI would add cost without matching the low business impact of a briefly stale unread badge. A likely representation is a per-user/per-conversation read cursor, but that is a <a class="section-reference" href="#apis">Section 3 — APIs &amp; Data Model</a> decision rather than a frozen schema here.</p></div>
+
+          <div class="manual-prose">
+            <h3>Scalability and Fault-Tolerance Requirements</h3>
+            <p>The architecture must scale horizontally across tens of millions of active users, billions of daily messages, millions of persistent connections, uneven conversation activity, very large channels, and high delivery fan-out. It cannot assume one server, broker, partition, or database node handles the workload.</p>
+            <p>The baseline failure contract is equally direct: <strong>failure of an individual component must not permanently lose an acknowledged message or collapse the entire messaging service.</strong> Service, database, Kafka, consumer, gateway, cache, network, duplicate-processing, retry-storm, offline-client, reconnect-storm, and backpressure behavior are tested in <a class="section-reference" href="#reliability">Section 7 — Consistency, Reliability &amp; Failures</a>.</p>
+          </div>
+
+          <div id="req-frozen" class="frozen-decisions">
+            <h3>Frozen Decisions</h3>
+            <dl>
+              <div><dt>Scope</dt><dd>Core DMs, channels, history, online delivery, reconnect recovery, multi-device sessions, and read-state synchronization.</dd></div>
+              <div><dt>Latency</dt><dd>Sub-second connected-user experience under normal operation; measure sender ACK and recipient delivery separately using tail percentiles.</dd></div>
+              <div><dt>Availability</dt><dd>Highly available core path; approximately <code>99.99%</code> only as an explicit interview assumption.</dd></div>
+              <div><dt>Durability</dt><dd>Zero acknowledged-message loss within the defined failure model.</dd></div>
+              <div><dt>Ordering</dt><dd>Meaningful order within a conversation/channel; no platform-wide global order.</dd></div>
+              <div><dt>Consistency</dt><dd>Authoritative history converges; read state may briefly diverge but must converge quickly.</dd></div>
+              <div><dt>Scale</dt><dd>50M DAU, 100 messages/user/day, and 10M concurrent connections as hypothetical inputs.</dd></div>
+              <div><dt>Fault tolerance</dt><dd>Individual infrastructure failures do not cause system-wide failure or permanent loss of acknowledged data.</dd></div>
+            </dl>
+          </div>
+
+          <section class="revision-section" id="req-answers">
+            <h3>One-Line Interview Answers</h3>
+            <dl class="revision-answers">
+              <div><dt>What are we designing?</dt><dd>The core real-time messaging subsystem: DMs, channels, durable history, online delivery, reconnect recovery, and multi-device synchronization.</dd></div>
+              <div><dt>Functional vs non-functional?</dt><dd>Functional requirements describe behavior; non-functional requirements define qualities and guarantees.</dd></div>
+              <div><dt>Requirement vs architecture decision?</dt><dd>A requirement states the capability or guarantee; Kafka, WebSockets, caching, and partitioning are mechanisms selected to satisfy it.</dd></div>
+              <div><dt>What scale are we assuming?</dt><dd>Approximately 50M DAU, 100 messages per active user per day, and 10M peak concurrent connections.</dd></div>
+              <div><dt>What does real time mean?</dt><dd>A normally sub-second connected-user experience, with sender ACK and recipient delivery measured separately.</dd></div>
+              <div><dt>What are p95 and p99?</dt><dd>p95 includes 95% of operations and p99 includes 99%; they expose tail latency that an average can hide.</dd></div>
+              <div><dt>Availability vs durability?</dt><dd>Availability asks whether requests can be served now; durability asks whether accepted data survives failures.</dd></div>
+              <div><dt>Does 99.99% availability permit message loss?</dt><dd>No. Availability and message durability are independent guarantees.</dd></div>
+              <div><dt>When exactly do we ACK the sender?</dt><dd>After the authoritative transaction containing the message and outbox event commits successfully; we do not wait for Kafka publication or recipient delivery.</dd></div>
+              <div><dt>Does sender ACK mean the recipient received the message?</dt><dd>No. Sender ACK means durable server acceptance; delivery and read are separate later states.</dd></div>
+              <div><dt>Accepted vs delivered vs read?</dt><dd>Accepted means durably stored by the system, delivered means it reached the recipient client under our delivery semantics, and read means recipient read state was recorded.</dd></div>
+              <div><dt>Do we promise absolute 100% durability?</dt><dd>No; we target zero acknowledged-message loss within an explicitly defined failure model.</dd></div>
+              <div><dt>Why do we define a failure model?</dt><dd>Because durability can only be evaluated against the failures the architecture explicitly claims to survive.</dd></div>
+              <div><dt>Independent failure vs fault-domain failure?</dt><dd>A node or broker failure is an independent component failure; availability-zone or regional loss is a correlated fault-domain failure requiring additional replication and failover design.</dd></div>
+              <div><dt>Do we need global ordering?</dt><dd>No. We need meaningful ordering within a conversation or channel while unrelated conversations scale independently.</dd></div>
+              <div><dt>How should read state behave across devices?</dt><dd>Brief divergence is acceptable; authoritative read position should propagate and converge quickly.</dd></div>
+              <div><dt>Message history vs read state?</dt><dd>History is authoritative durable data; read state is metadata that can use fast eventual consistency.</dd></div>
+              <div><dt>Why can fan-out dominate ingestion?</dt><dd>One stored channel message can create thousands or hundreds of thousands of recipient-delivery operations.</dd></div>
+              <div><dt>Baseline fault-tolerance requirement?</dt><dd>One component failure must not permanently lose an acknowledged message or take down the entire service.</dd></div>
+            </dl>
+          </section>
+
+          <article class="spoken-answer">
+            <span>What I Would Say in the Interview</span>
+            <p>“I would scope this to the core real-time messaging subsystem rather than the complete Slack product. I need direct and channel messaging, durable history, near-real-time delivery to connected users, reconnect recovery, and multi-device synchronization. I would initially exclude calls, search, file-storage internals, integrations, threads, reactions, and push notifications.</p>
+            <p>Unless you give me different scale, I’ll assume roughly 50 million daily active users, 100 messages per active user per day, and 10 million concurrent connections. I’ll distinguish sender acknowledgement from recipient delivery and target a sub-second online experience, looking at p95 and p99 rather than averages alone.</p>
+            <p>The service should be highly available, but availability is separate from durability. Once I acknowledge a message, it must be durably accepted within the failure model. I do not need global ordering; I need meaningful ordering within a conversation or channel while unrelated conversations remain independently scalable. Durable history must converge across devices, while read position can be fast eventually consistent. With those requirements frozen, I would next quantify write throughput, fan-out delivery, bandwidth, storage growth, and connection capacity.”</p>
+          </article>
+
+          <section class="checkpoint" id="req-checkpoint">
+            <div><span>Interview Checkpoint</span><h3>Answer these without notes</h3></div>
+            <ol><li>What exact subsystem is in scope, and why constrain it?</li><li>How do functional, non-functional, and architecture decisions differ?</li><li>Which workload assumptions feed Section 2?</li><li>Why separate ACK latency from recipient-delivery latency?</li><li>What do p95 and p99 tell you?</li><li>Why does availability not imply durability or acceptable latency?</li><li>At exactly what architectural boundary does the sender receive a successful ACK?</li><li>Does sender ACK imply recipient delivery?</li><li>What is the difference between accepted, delivered, and read?</li><li>Why must a durability guarantee specify its failure model?</li><li>How is an individual node failure different from an availability-zone or regional fault-domain failure?</li><li>Why reject global ordering?</li><li>Which cross-device state can be eventually consistent?</li><li>Why can delivery fan-out dominate ingestion?</li><li>What must one component failure never cause?</li></ol>
+          </section>
+
+          <footer class="section-next"><a class="section-reference" href="#scale">Continue to Section 2 — Scale &amp; Capacity →</a></footer>
         </div>
       </section>
 
-      <section class="study-section" id="requirements" aria-labelledby="requirements-title">
-        <div class="container reading-container">
-          <div class="chapter-heading"><span>01</span><div><p>Requirements &amp; Scope</p><h2 id="requirements-title">Constrain the problem before selecting technologies</h2></div><b class="maturity maturity-first">First pass · ≈65%</b></div>
-          <article class="interview-answer"><span>What I would say in the interview</span><p>“Slack is too large to design meaningfully in one session. I’ll focus on the core real-time messaging subsystem: direct and channel messages, online delivery, durable history, and recovery after a temporary disconnect. I’ll exclude calls, search, integrations, file internals, threads, reactions, and push notifications unless you want one brought back into scope.”</p></article>
-          <div class="study-prose-grid">
-            <article class="deep-card"><span>Questions to clarify</span><h3>Establish the contract first</h3><ul><li>Are both direct and channel messages required?</li><li>Must acknowledged messages survive process or node failure?</li><li>What ordering guarantee is useful: global or per conversation?</li><li>How quickly should online delivery feel?</li><li>How should temporary disconnection behave?</li></ul></article>
-            <article class="deep-card"><span>Scope</span><h3>Core subsystem</h3><ul><li>One-to-one and channel messaging</li><li>Users belonging to multiple channels</li><li>Near-real-time delivery to online users</li><li>Persistent conversation/channel history</li><li>Temporary disconnection and later recovery</li></ul></article>
-            <article class="deep-card muted-card"><span>Initially out of scope</span><h3>Adjacent systems</h3><ul><li>Voice/video and full-text search</li><li>Bots and integrations</li><li>File-storage internals</li><li>Threads and reactions</li><li>Push-notification infrastructure</li></ul></article>
-          </div>
-          <div class="requirements-key"><div class="key-functional"><strong>WHAT</strong><span>the system does</span><b>Functional</b></div><i>→</i><div class="key-quality"><strong>HOW WELL</strong><span>it must do it</span><b>Non-functional</b></div><i>→</i><div class="key-decision"><strong>HOW</strong><span>we implement it</span><b>Architecture decision</b></div></div>
-          <div class="reasoning-grid"><article class="reasoning-card reasoning-functional"><span class="reasoning-index">FUNCTIONAL</span><h3>Capabilities</h3><p>Send a DM, send to a channel, retrieve history, receive messages in real time, and recover missed messages.</p></article><article class="reasoning-card reasoning-quality"><span class="reasoning-index">NON-FUNCTIONAL</span><h3>Qualities</h3><p>Low latency, durability, high availability, horizontal scale, meaningful ordering, failure tolerance, and millions of long-lived connections.</p></article><article class="reasoning-card reasoning-decision"><span class="reasoning-index">MECHANISMS</span><h3>Architecture choices</h3><p>Kafka, cache, gateways, replication, load balancing, partitioning, and outbox are possible mechanisms—not requirements.</p></article></div>
-          <aside class="interview-takeaway"><span>Interview takeaway</span><strong>Do not immediately say “Kafka” or “Redis” during requirements gathering. First establish the problem each mechanism needs to solve.</strong></aside>
-        </div>
-      </section>
-
-      <section class="study-section" id="scale" aria-labelledby="scale-title">
+      <section class="study-section interview-panel" id="scale" role="tabpanel" aria-labelledby="tab-scale" hidden>
         <div class="container reading-container">
           <div class="chapter-heading"><span>02</span><div><p>Scale &amp; Capacity</p><h2 id="scale-title">Turn assumptions into throughput</h2></div><b class="maturity maturity-first">First pass · ≈35%</b></div>
           <article class="interview-answer"><span>What I would say in the interview</span><p>“I’ll use hypothetical planning numbers: 50 million daily active users, 100 messages per user per day, and 10 million peak concurrent connections. That is 5 billion messages per day, roughly 58 thousand writes per second on average, around 290 thousand at an illustrative 5× peak, and an initial target near 500 thousand writes per second with headroom. I’ll model fan-out separately because writes and deliveries are different workloads.”</p></article>
@@ -74,7 +248,7 @@
         </div>
       </section>
 
-      <section class="study-section" id="apis" aria-labelledby="apis-title">
+      <section class="study-section interview-panel" id="apis" role="tabpanel" aria-labelledby="tab-apis" hidden>
         <div class="container reading-container">
           <div class="chapter-heading"><span>03</span><div><p>APIs &amp; Data Model</p><h2 id="apis-title">Not yet designed</h2></div><b class="maturity maturity-pending">Not yet designed · 0%</b></div>
           <article class="interview-answer"><span>What I would say in the interview</span><p>“The API and data model are the next explicit design step. I would not invent endpoints or schemas until we agree on identity, ordering, pagination, reconnect, and history semantics.”</p></article>
@@ -83,7 +257,7 @@
         </div>
       </section>
 
-      <section class="study-section" id="architecture" aria-labelledby="architecture-title">
+      <section class="study-section interview-panel" id="architecture" role="tabpanel" aria-labelledby="tab-architecture" hidden>
         <div class="container reading-container">
           <div class="chapter-heading"><span>04</span><div><p>High-Level Architecture</p><h2 id="architecture-title">Initial skeleton, not a final topology</h2></div><b class="maturity maturity-initial">Initial · ≈40%</b></div>
           <article class="interview-answer"><span>What I would say in the interview</span><p>“The synchronous path validates and durably stores the message and its outbox event before acknowledging the sender. A separate publisher sends the event to Kafka. Delivery then proceeds asynchronously through a delivery service and the WebSocket gateway that owns the recipient connection.”</p></article>
@@ -93,7 +267,7 @@
         </div>
       </section>
 
-      <section class="study-section" id="flows" aria-labelledby="flows-title">
+      <section class="study-section interview-panel" id="flows" role="tabpanel" aria-labelledby="tab-flows" hidden>
         <div class="container reading-container">
           <div class="chapter-heading"><span>05</span><div><p>Critical End-to-End Flows</p><h2 id="flows-title">Durable write and publication intent</h2></div><b class="maturity maturity-first">Write path partial · ≈50%</b></div>
           <article class="interview-answer"><span>What I would say in the interview</span><p>“I will only acknowledge after authoritative persistence. To avoid the database/Kafka dual-write gap, the message and outbox event commit together. The outbox publisher can retry Kafka publication because intent is durable.”</p></article>
@@ -105,7 +279,7 @@
         </div>
       </section>
 
-      <section class="study-section" id="scaling" aria-labelledby="scaling-title">
+      <section class="study-section interview-panel" id="scaling" role="tabpanel" aria-labelledby="tab-scaling" hidden>
         <div class="container reading-container">
           <div class="chapter-heading"><span>06</span><div><p>Scaling Deep Dives</p><h2 id="scaling-title">Connections, Kafka semantics, ordering, and the hot partition</h2></div><b class="maturity maturity-initial">Initial · ≈20%</b></div>
           <article class="interview-answer"><span>What I would say in the interview</span><p>“Ten million concurrent users mean roughly ten million long-lived connections, so this is a connection-management problem as well as a request-throughput problem. For the event stream, I’ll initially key by conversation ID to preserve per-conversation partition order, but I’ll call out that a single huge channel can exceed one partition’s processing capacity. That conflict is unresolved.”</p></article>
@@ -120,7 +294,7 @@
         </div>
       </section>
 
-      <section class="study-section" id="reliability" aria-labelledby="reliability-title">
+      <section class="study-section interview-panel" id="reliability" role="tabpanel" aria-labelledby="tab-reliability" hidden>
         <div class="container reading-container">
           <div class="chapter-heading"><span>07</span><div><p>Consistency, Reliability &amp; Failures</p><h2 id="reliability-title">Separate established invariants from open guarantees</h2></div><b class="maturity maturity-first">First pass · ≈25%</b></div>
           <div class="decision-register"><article class="register-designed"><span>DESIGNED</span><h3>Durable sender acknowledgement</h3><p>Success only follows authoritative persistence.</p></article><article class="register-initial"><span>INITIAL</span><h3>Per-conversation ordering boundary</h3><p>No global ordering; initial Kafka affinity by conversation ID.</p></article><article class="register-designed"><span>DESIGNED</span><h3>Dual-write protection</h3><p>Message and outbox intent commit atomically.</p></article><article class="register-pending"><span>NOT YET DESIGNED</span><h3>End-user delivery semantics</h3><p>At-most-once, at-least-once, or effectively-once experience remains open.</p></article></div>
@@ -130,13 +304,12 @@
         </div>
       </section>
 
-      <section class="study-section" id="tradeoffs" aria-labelledby="tradeoffs-title">
+      <section class="study-section interview-panel" id="multiregion" role="tabpanel" aria-labelledby="tab-multiregion" hidden>
         <div class="container reading-container">
           <div class="chapter-heading"><span>08</span><div><p>10×/100×, Multi-Region &amp; Trade-offs</p><h2 id="tradeoffs-title">Roadmap, not invented architecture</h2></div><b class="maturity maturity-pending">Barely started · ≈5%</b></div>
           <article class="interview-answer"><span>What I would say in the interview</span><p>“Before claiming this design works at 10× or across regions, I would revisit its throughput, connection, storage, partitioning, ordering, failure, and recovery assumptions. Those decisions have not yet been made, so I’ll make the open work explicit.”</p></article>
           <div class="roadmap-grid"><article><span>Scaling</span><h3>10× / 100× architecture</h3><p>Re-evaluate writes, fan-out, connections, partitions, consumers, bandwidth, and storage.</p></article><article><span>Data</span><h3>Storage &amp; retention</h3><p>Technology, sharding, replication, retention, and archive remain open.</p></article><article><span>Delivery</span><h3>Fan-out &amp; semantics</h3><p>Small versus huge channels, idempotency, deduplication, and delivery guarantees remain open.</p></article><article><span>Connections</span><h3>Gateway architecture</h3><p>Capacity, registry, routing, heartbeats, backpressure, failures, and reconnect remain open.</p></article><article><span>Ordering</span><h3>Final sequence model</h3><p>Concurrent senders, hot channels, replay, and missing sequence behavior remain open.</p></article><article><span>Regions</span><h3>Multi-Region &amp; trade-offs</h3><p>Routing, replication, failover, data residency, ordering, and final trade-off analysis remain open.</p></article></div>
           <aside class="principal-lens"><div class="lens-heading"><span>⌁</span><div><p>Principal-level design lens</p><h3>For every component, ask</h3></div></div><ol><li><span>01</span>What problem does it solve?</li><li><span>02</span>What state does it own?</li><li><span>03</span>How is that state partitioned?</li><li><span>04</span>What breaks at 10× or 100×?</li><li><span>05</span>What happens when it fails?</li></ol></aside>
-          <div class="view-switcher view-switcher-bottom"><a href="../portfolio/slack.html">← Portfolio View</a><span aria-current="page">Interview Prep / Deep Dive</span></div>
         </div>
       </section>
     </main>

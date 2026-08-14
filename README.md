@@ -20,7 +20,7 @@
 
 | # | Architecture Study | Status |
 |---:|:---|:---:|
-| 01 | [**Real-Time Messaging** — Slack / WhatsApp](https://gunturmanjusha.github.io/DistributedSystemsDesign/docs/portfolio/slack.html) | 🟦 **In Progress** |
+| 01 | [**Real-Time Messaging** — Slack / WhatsApp](https://gunturmanjusha.github.io/DistributedSystemsDesign/portfolio/slack.html) | 🟦 **In Progress** |
 | 02 | **Cloud File Storage** — Google Drive / Dropbox | Planned |
 | 03 | **Ticket Booking System** — Ticketmaster | Planned |
 | 04 | **Notification System** | Planned |
