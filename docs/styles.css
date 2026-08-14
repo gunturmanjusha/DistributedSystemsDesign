@@ -5128,6 +5128,20 @@ a {
   font-size: clamp(1.75rem, 2.7vw, 2.5rem);
 }
 
+.landing-page .principles .section-heading,
+.landing-page .systems .section-heading {
+  max-width: none;
+}
+
+.landing-page .principles .section-heading > p,
+.landing-page .framework-intro > p,
+.landing-page .systems .section-heading > p:last-child {
+  width: 100%;
+  max-width: none;
+  text-align: justify;
+  text-justify: inter-word;
+}
+
 .landing-page .principles .section-heading {
   margin-bottom: 24px;
 }
@@ -5159,7 +5173,7 @@ a {
 
 .landing-page .framework h2 {
   color: #0a1930;
-  font-size: clamp(1.55rem, 2.2vw, 2rem);
+  font-size: clamp(1.75rem, 2.7vw, 2.5rem);
 }
 
 .landing-page .framework-intro > p {
@@ -5397,4 +5411,59 @@ a {
     flex-wrap: wrap;
     justify-content: center;
   }
+}
+
+/* Shared author footer for architecture portfolio and study pages. */
+.identity-footer {
+  padding-block: 22px;
+  border-top-color: rgb(255 255 255 / 10%);
+  color: #aab8ca;
+  background:
+    radial-gradient(circle at 78% 20%, rgb(87 103 255 / 14%), transparent 30%),
+    linear-gradient(132deg, #0d1723, #142136 58%, #1c2344);
+}
+
+.identity-footer .container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.identity-footer .footer-author {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  margin: 0;
+  color: #aab8ca;
+  text-align: center;
+}
+
+.identity-footer .footer-author > div {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.identity-footer .footer-author strong {
+  color: #f0f5fb;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.identity-footer .footer-author span {
+  color: #8fa0b7;
+  font-size: 0.68rem;
+}
+
+.identity-footer .footer-author a {
+  color: #6fe2dc;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.identity-footer .footer-author a:hover,
+.identity-footer .footer-author a:focus-visible {
+  color: #fff;
 }

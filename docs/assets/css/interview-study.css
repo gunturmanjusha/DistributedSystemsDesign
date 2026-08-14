@@ -489,8 +489,13 @@ body.interview-manual {
 .interview-manual .precision-note,
 .interview-manual .scaling-note { margin-top: 1rem; }
 
-.interview-manual .site-footer { min-height: 4rem; color: #cdd8e8; background: var(--manual-navy); }
-.interview-manual .site-footer .container { justify-content: center; text-align: center; }
+.interview-manual .site-footer { min-height: 4rem; }
+.interview-manual .site-footer.identity-footer {
+  border-top-color: rgba(255, 255, 255, 0.12);
+  background:
+    radial-gradient(circle at 88% 10%, rgba(104, 70, 199, 0.28), transparent 26rem),
+    linear-gradient(120deg, #10213b, #152942 70%, #17233d);
+}
 
 @media (max-width: 1020px) {
   .interview-manual .manual-tabs .container { grid-template-columns: repeat(4, minmax(0, 1fr)); }
